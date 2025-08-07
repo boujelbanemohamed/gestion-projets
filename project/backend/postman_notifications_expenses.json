@@ -1,0 +1,567 @@
+{
+  "name": "🔔 Notifications & 💰 Expenses",
+  "item": [
+    {
+      "name": "🔔 Notifications",
+      "item": [
+        {
+          "name": "Get User Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has notifications array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('notifications');",
+                  "    pm.expect(response.notifications).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Response has pagination info\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('pagination');",
+                  "    pm.expect(response.pagination).to.have.property('total');",
+                  "    pm.expect(response.pagination).to.have.property('page');",
+                  "    pm.expect(response.pagination).to.have.property('limit');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.notifications.length > 0) {",
+                  "        pm.collectionVariables.set('notificationId', response.notifications[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Notification by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has notification data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('titre');",
+                  "    pm.expect(response).to.have.property('message');",
+                  "    pm.expect(response).to.have.property('type');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has notification data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('titre');",
+                  "    pm.expect(response.titre).to.eql('Nouvelle notification test');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('notificationId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Nouvelle notification test\",\n  \"message\": \"Ceci est un message de test\",\n  \"type\": \"info\",\n  \"destinataire_id\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Mark Notification as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success message\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}", "read"]
+            }
+          }
+        },
+        {
+          "name": "Mark All Notifications as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success message\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "read-all"]
+            }
+          }
+        },
+        {
+          "name": "Get Notification Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has notification stats\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('total');",
+                  "    pm.expect(response).to.have.property('unread');",
+                  "    pm.expect(response).to.have.property('byType');",
+                  "    pm.expect(response).to.have.property('recent');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success message\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💰 Expenses",
+      "item": [
+        {
+          "name": "Get Project Expenses",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has expenses array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('expenses');",
+                  "    pm.expect(response.expenses).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Response has pagination info\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('pagination');",
+                  "    pm.expect(response.pagination).to.have.property('total');",
+                  "    pm.expect(response.pagination).to.have.property('page');",
+                  "    pm.expect(response.pagination).to.have.property('limit');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.expenses.length > 0) {",
+                  "        pm.collectionVariables.set('expenseId', response.expenses[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/project/{{projectId}}?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "project", "{{projectId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Expense by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has expense data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('intitule');",
+                  "    pm.expect(response).to.have.property('montant');",
+                  "    pm.expect(response).to.have.property('devise');",
+                  "    pm.expect(response).to.have.property('date_depense');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has expense data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('intitule');",
+                  "    pm.expect(response.intitule).to.eql('Nouvelle dépense test');",
+                  "    pm.expect(response).to.have.property('montant');",
+                  "    pm.expect(response.montant).to.eql(1000);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('expenseId', response.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projet_id\": \"{{projectId}}\",\n  \"intitule\": \"Nouvelle dépense test\",\n  \"montant\": 1000,\n  \"devise\": \"EUR\",\n  \"date_depense\": \"2024-01-15\",\n  \"rubrique\": \"Matériel\",\n  \"description\": \"Achat de matériel informatique\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses"]
+            }
+          }
+        },
+        {
+          "name": "Update Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has updated expense data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('intitule');",
+                  "    pm.expect(response.intitule).to.eql('Dépense modifiée');",
+                  "    pm.expect(response).to.have.property('montant');",
+                  "    pm.expect(response.montant).to.eql(1500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"intitule\": \"Dépense modifiée\",\n  \"montant\": 1500,\n  \"devise\": \"EUR\",\n  \"date_depense\": \"2024-01-20\",\n  \"rubrique\": \"Logiciels\",\n  \"description\": \"Achat de licences logiciels\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Expense Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has expense stats\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('totalExpenses');",
+                  "    pm.expect(response).to.have.property('remainingBudget');",
+                  "    pm.expect(response).to.have.property('consumptionRate');",
+                  "    pm.expect(response).to.have.property('expensesByCategory');",
+                  "    pm.expect(response).to.have.property('expensesByMonth');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/project/{{projectId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "project", "{{projectId}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Delete Expense",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success message\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expenses", "{{expenseId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Service d'Authentification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .status-pass { background: #dcfce7; color: #166534; }
+        .status-fail { background: #fef2f2; color: #dc2626; }
+        .status-warn { background: #fef3c7; color: #92400e; }
+        .btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .btn:hover { background: #4338ca; }
+        .log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Test Service d'Authentification</h1>
+            <p>Diagnostic complet du service d'authentification Supabase</p>
+        </div>
+        
+        <div class="content">
+            <button class="btn" onclick="testAuthService()">🚀 Tester le Service Auth</button>
+            <button class="btn" onclick="testWithCredentials()">🔑 Test avec Identifiants</button>
+            <button class="btn" onclick="clearResults()">🗑️ Effacer</button>
+            
+            <div id="results"></div>
+            <div id="log" class="log" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://obdadipsbbrlwetkuyui.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MjE4NzQsImV4cCI6MjA1MTQ5Nzg3NH0.Ej4Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8';
+        
+        let testResults = [];
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.style.display = 'block';
+            logDiv.textContent += new Date().toLocaleTimeString() + ' - ' + message + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function addResult(test, status, message, details = '') {
+            testResults.push({ test, status, message, details });
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const resultsDiv = document.getElementById('results');
+            
+            if (testResults.length === 0) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            testResults.forEach(result => {
+                html += `
+                    <div class="test-item">
+                        <div>
+                            <strong>${result.test}</strong>
+                            ${result.details ? `<br><small style="color: #6b7280;">${result.details}</small>` : ''}
+                        </div>
+                        <div class="status status-${result.status}">
+                            ${result.status === 'pass' ? '✅' : result.status === 'warn' ? '⚠️' : '❌'} 
+                            ${result.message}
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+
+        async function testAuthService() {
+            testResults = [];
+            updateDisplay();
+            log('🔍 Début du test du service d\'authentification...');
+
+            // Test 1: Configuration de base
+            log('Test 1: Vérification de la configuration...');
+            addResult('Configuration URL', 'pass', 'Configurée', SUPABASE_URL);
+            addResult('Configuration Clé', 'pass', 'Configurée', 'Clé anon présente');
+
+            // Test 2: Connectivité générale Supabase
+            log('Test 2: Test de connectivité générale...');
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    headers: { 'apikey': SUPABASE_ANON_KEY }
+                });
+                
+                if (response.ok || response.status === 401) {
+                    addResult('Connectivité Supabase', 'pass', 'Opérationnelle', `Status: ${response.status}`);
+                    log('✅ Connectivité Supabase OK');
+                } else {
+                    addResult('Connectivité Supabase', 'warn', `Status ${response.status}`, 'Connexion partielle');
+                    log(`⚠️ Connectivité partielle: ${response.status}`);
+                }
+            } catch (error) {
+                addResult('Connectivité Supabase', 'fail', 'Erreur réseau', error.message);
+                log(`❌ Erreur de connectivité: ${error.message}`);
+            }
+
+            // Test 3: Service d'authentification - Health Check
+            log('Test 3: Test du service d\'authentification...');
+            try {
+                const authHealthResponse = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
+                    headers: { 
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (authHealthResponse.ok) {
+                    addResult('Service Auth Health', 'pass', 'Actif', 'Endpoint health accessible');
+                    log('✅ Service Auth Health OK');
+                } else {
+                    log(`⚠️ Health endpoint non disponible: ${authHealthResponse.status}`);
+                    
+                    // Test alternatif: endpoint settings
+                    try {
+                        const settingsResponse = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+                            headers: { 'apikey': SUPABASE_ANON_KEY }
+                        });
+                        
+                        if (settingsResponse.ok) {
+                            addResult('Service Auth Settings', 'pass', 'Accessible', 'Endpoint settings OK');
+                            log('✅ Service Auth Settings OK');
+                        } else if (settingsResponse.status === 401 || settingsResponse.status === 403) {
+                            addResult('Service Auth Settings', 'pass', 'Protégé', 'Service actif mais protégé (normal)');
+                            log('✅ Service Auth protégé (normal)');
+                        } else {
+                            addResult('Service Auth Settings', 'warn', `Status ${settingsResponse.status}`, 'Service partiellement accessible');
+                            log(`⚠️ Service Auth partiel: ${settingsResponse.status}`);
+                        }
+                    } catch (settingsError) {
+                        log(`❌ Erreur settings: ${settingsError.message}`);
+                    }
+                }
+            } catch (error) {
+                log(`❌ Erreur service auth: ${error.message}`);
+                
+                // Test final: vérifier indirectement via signup
+                try {
+                    log('Test de fallback via signup...');
+                    const signupResponse = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+                        method: 'POST',
+                        headers: { 
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: 'test-' + Date.now() + '@example.com',
+                            password: 'test123456'
+                        })
+                    });
+
+                    if (signupResponse.status === 400 || signupResponse.status === 422 || signupResponse.status === 200) {
+                        addResult('Service Auth (indirect)', 'pass', 'Fonctionnel', 'Test via signup réussi');
+                        log('✅ Service Auth fonctionnel (test indirect)');
+                    } else {
+                        addResult('Service Auth (indirect)', 'fail', `Status ${signupResponse.status}`, 'Service non accessible');
+                        log(`❌ Service Auth non accessible: ${signupResponse.status}`);
+                    }
+                } catch (signupError) {
+                    addResult('Service Auth (indirect)', 'fail', 'Erreur réseau', signupError.message);
+                    log(`❌ Erreur test indirect: ${signupError.message}`);
+                }
+            }
+
+            // Test 4: Vérification de la session locale
+            log('Test 4: Vérification de la session locale...');
+            const authTokens = Object.keys(localStorage).filter(key => key.includes('supabase') && key.includes('auth'));
+            
+            if (authTokens.length > 0) {
+                addResult('Session Locale', 'pass', 'Session trouvée', `${authTokens.length} token(s) trouvé(s)`);
+                log(`✅ Session locale trouvée: ${authTokens.length} token(s)`);
+            } else {
+                addResult('Session Locale', 'warn', 'Pas de session', 'Aucun token d\'authentification local');
+                log('⚠️ Pas de session locale trouvée');
+            }
+
+            // Test 5: Test de la configuration client Supabase
+            log('Test 5: Test de la configuration client...');
+            try {
+                // Simuler la création d'un client Supabase
+                const clientTest = {
+                    url: SUPABASE_URL,
+                    key: SUPABASE_ANON_KEY,
+                    valid: SUPABASE_URL.includes('supabase.co') && SUPABASE_ANON_KEY.length > 100
+                };
+
+                if (clientTest.valid) {
+                    addResult('Configuration Client', 'pass', 'Valide', 'URL et clé correctement formatées');
+                    log('✅ Configuration client valide');
+                } else {
+                    addResult('Configuration Client', 'fail', 'Invalide', 'URL ou clé mal formatée');
+                    log('❌ Configuration client invalide');
+                }
+            } catch (error) {
+                addResult('Configuration Client', 'fail', 'Erreur', error.message);
+                log(`❌ Erreur configuration client: ${error.message}`);
+            }
+
+            log('🏁 Test du service d\'authentification terminé');
+        }
+
+        async function testWithCredentials() {
+            log('🔑 Test avec identifiants de test...');
+            
+            try {
+                const loginResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'boujelbane@gmail.com',
+                        password: 'test123'
+                    })
+                });
+
+                if (loginResponse.ok) {
+                    const data = await loginResponse.json();
+                    addResult('Test Connexion', 'pass', 'Connexion réussie', 'Identifiants valides');
+                    log('✅ Test de connexion réussi');
+                } else if (loginResponse.status === 400 || loginResponse.status === 401) {
+                    addResult('Test Connexion', 'pass', 'Service fonctionnel', `Status ${loginResponse.status} - Service d'auth opérationnel`);
+                    log(`✅ Service d'authentification fonctionnel (Status ${loginResponse.status})`);
+                } else if (loginResponse.status === 422) {
+                    addResult('Test Connexion', 'pass', 'Validation active', 'Service fonctionne avec validation des données');
+                    log('✅ Service avec validation des données actif');
+                } else {
+                    addResult('Test Connexion', 'warn', `Status ${loginResponse.status}`, 'Service partiellement accessible');
+                    log(`⚠️ Service partiellement accessible: ${loginResponse.status}`);
+                }
+            } catch (error) {
+                addResult('Test Connexion', 'fail', 'Erreur réseau', error.message);
+                log(`❌ Erreur test connexion: ${error.message}`);
+            }
+        }
+
+        function clearResults() {
+            testResults = [];
+            updateDisplay();
+            document.getElementById('log').textContent = '';
+            document.getElementById('log').style.display = 'none';
+        }
+
+        // Auto-test au chargement
+        setTimeout(() => {
+            log('🚀 Lancement automatique du test...');
+            testAuthService();
+        }, 1000);
+    </script>
+</body>
+</html>

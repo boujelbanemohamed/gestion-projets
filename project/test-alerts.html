@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test des Alertes de Projet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+            color: #92400e;
+        }
+        .alert-danger {
+            background-color: #fee2e2;
+            border-color: #f87171;
+            color: #dc2626;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .error {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔔 Test des Alertes de Projet</h1>
+    
+    <div class="test-section">
+        <h2>Test des Fonctions d'Alerte</h2>
+        <div id="alert-tests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test des Seuils d'Alerte</h2>
+        <div id="threshold-tests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test des Messages d'Alerte</h2>
+        <div id="message-tests"></div>
+    </div>
+
+    <script>
+        // Simulation des fonctions d'alerte (copié depuis alertsConfig.ts)
+        const DEFAULT_ALERT_THRESHOLD = 7;
+
+        const AlertSeverity = {
+            INFO: 'info',
+            WARNING: 'warning',
+            DANGER: 'danger'
+        };
+
+        function isProjectApproachingDeadline(endDate, threshold = DEFAULT_ALERT_THRESHOLD) {
+            if (!endDate) return false;
+            
+            const today = new Date();
+            const daysUntilDeadline = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            
+            return daysUntilDeadline >= 0 && daysUntilDeadline <= threshold;
+        }
+
+        function isProjectOverdue(endDate) {
+            if (!endDate) return false;
+            
+            const today = new Date();
+            return endDate < today;
+        }
+
+        function getDaysUntilDeadline(endDate) {
+            if (!endDate) return null;
+            
+            const today = new Date();
+            return Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        function getAlertMessage(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return '';
+            
+            if (daysUntilDeadline < 0) {
+                return `Projet en dépassement de délai depuis ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+            } else if (daysUntilDeadline === 0) {
+                return 'Ce projet arrive à échéance aujourd\'hui';
+            } else {
+                return `Ce projet arrive à échéance dans ${daysUntilDeadline} jour${daysUntilDeadline > 1 ? 's' : ''}`;
+            }
+        }
+
+        function getAlertSeverity(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return AlertSeverity.INFO;
+            
+            if (daysUntilDeadline < 0) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 2) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 5) {
+                return AlertSeverity.WARNING;
+            } else {
+                return AlertSeverity.INFO;
+            }
+        }
+
+        function getAlertColorClasses(severity) {
+            switch (severity) {
+                case AlertSeverity.DANGER:
+                    return 'alert-danger';
+                case AlertSeverity.WARNING:
+                    return 'alert-warning';
+                case AlertSeverity.INFO:
+                default:
+                    return 'alert-info';
+            }
+        }
+
+        // Tests
+        function runTests() {
+            const alertTestsDiv = document.getElementById('alert-tests');
+            const thresholdTestsDiv = document.getElementById('threshold-tests');
+            const messageTestsDiv = document.getElementById('message-tests');
+
+            // Test 1: Projet approchant de l'échéance (dans 5 jours)
+            const date5Days = new Date();
+            date5Days.setDate(date5Days.getDate() + 5);
+            
+            const isApproaching5 = isProjectApproachingDeadline(date5Days);
+            const days5 = getDaysUntilDeadline(date5Days);
+            const message5 = getAlertMessage(days5);
+            const severity5 = getAlertSeverity(days5);
+            
+            alertTestsDiv.innerHTML += `
+                <div class="test-result ${isApproaching5 ? 'success' : 'error'}">
+                    <strong>Test 1 - Projet dans 5 jours:</strong> ${isApproaching5 ? '✅ PASS' : '❌ FAIL'}<br>
+                    Jours restants: ${days5}<br>
+                    Message: "${message5}"<br>
+                    Sévérité: ${severity5}
+                </div>
+                <div class="alert ${getAlertColorClasses(severity5)}">
+                    ${message5}
+                </div>
+            `;
+
+            // Test 2: Projet en dépassement (il y a 3 jours)
+            const dateOverdue = new Date();
+            dateOverdue.setDate(dateOverdue.getDate() - 3);
+            
+            const isOverdue = isProjectOverdue(dateOverdue);
+            const daysOverdue = getDaysUntilDeadline(dateOverdue);
+            const messageOverdue = getAlertMessage(daysOverdue);
+            const severityOverdue = getAlertSeverity(daysOverdue);
+            
+            alertTestsDiv.innerHTML += `
+                <div class="test-result ${isOverdue ? 'success' : 'error'}">
+                    <strong>Test 2 - Projet en dépassement:</strong> ${isOverdue ? '✅ PASS' : '❌ FAIL'}<br>
+                    Jours de dépassement: ${Math.abs(daysOverdue)}<br>
+                    Message: "${messageOverdue}"<br>
+                    Sévérité: ${severityOverdue}
+                </div>
+                <div class="alert ${getAlertColorClasses(severityOverdue)}">
+                    ${messageOverdue}
+                </div>
+            `;
+
+            // Test 3: Projet aujourd'hui
+            const dateToday = new Date();
+            const daysToday = getDaysUntilDeadline(dateToday);
+            const messageToday = getAlertMessage(daysToday);
+            const severityToday = getAlertSeverity(daysToday);
+            
+            alertTestsDiv.innerHTML += `
+                <div class="test-result success">
+                    <strong>Test 3 - Projet aujourd'hui:</strong> ✅ PASS<br>
+                    Jours restants: ${daysToday}<br>
+                    Message: "${messageToday}"<br>
+                    Sévérité: ${severityToday}
+                </div>
+                <div class="alert ${getAlertColorClasses(severityToday)}">
+                    ${messageToday}
+                </div>
+            `;
+
+            // Test des seuils personnalisés
+            const customThresholds = [3, 7, 14, 30];
+            customThresholds.forEach(threshold => {
+                const date10Days = new Date();
+                date10Days.setDate(date10Days.getDate() + 10);
+                
+                const isApproaching = isProjectApproachingDeadline(date10Days, threshold);
+                
+                thresholdTestsDiv.innerHTML += `
+                    <div class="test-result ${(threshold >= 10) === isApproaching ? 'success' : 'error'}">
+                        <strong>Seuil ${threshold} jours:</strong> ${(threshold >= 10) === isApproaching ? '✅ PASS' : '❌ FAIL'}<br>
+                        Projet dans 10 jours - Alerte déclenchée: ${isApproaching ? 'Oui' : 'Non'}
+                    </div>
+                `;
+            });
+
+            // Test des messages pour différentes situations
+            const testCases = [
+                { days: -5, expected: 'dépassement de délai depuis 5 jours' },
+                { days: 0, expected: 'arrive à échéance aujourd\'hui' },
+                { days: 1, expected: 'arrive à échéance dans 1 jour' },
+                { days: 7, expected: 'arrive à échéance dans 7 jours' }
+            ];
+
+            testCases.forEach(testCase => {
+                const message = getAlertMessage(testCase.days);
+                const isCorrect = message.includes(testCase.expected);
+                
+                messageTestsDiv.innerHTML += `
+                    <div class="test-result ${isCorrect ? 'success' : 'error'}">
+                        <strong>Message pour ${testCase.days} jours:</strong> ${isCorrect ? '✅ PASS' : '❌ FAIL'}<br>
+                        Attendu: contient "${testCase.expected}"<br>
+                        Obtenu: "${message}"
+                    </div>
+                `;
+            });
+        }
+
+        // Lancer les tests au chargement de la page
+        window.onload = runTests;
+    </script>
+</body>
+</html>

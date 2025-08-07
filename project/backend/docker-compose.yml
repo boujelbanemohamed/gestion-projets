@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: project_management_db
+    environment:
+      POSTGRES_DB: project_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - project_management_network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: project_management_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - project_management_network
+
+  # API Backend
+  api:
+    build: .
+    container_name: project_management_api
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: project_management
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_EXPIRES_IN: 24h
+      PORT: 3000
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    networks:
+      - project_management_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  project_management_network:
+    driver: bridge

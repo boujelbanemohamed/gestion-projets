@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Performance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .perf-container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-value {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .good { background: #d1fae5; color: #065f46; }
+        .warning { background: #fef3c7; color: #92400e; }
+        .poor { background: #fee2e2; color: #dc2626; }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            margin: 4px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .chart {
+            width: 100%;
+            height: 200px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            display: flex;
+            align-items: end;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .bar {
+            flex: 1;
+            margin: 0 2px;
+            background: #3b82f6;
+            border-radius: 4px 4px 0 0;
+            min-height: 10px;
+            transition: height 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Test de Performance de la Plateforme</h1>
+    
+    <div class="perf-container">
+        <h2>📊 Métriques Core Web Vitals</h2>
+        <div class="metric">
+            <span>Largest Contentful Paint (LCP)</span>
+            <span class="metric-value" id="lcp-value">Mesure en cours...</span>
+        </div>
+        <div class="metric">
+            <span>First Input Delay (FID)</span>
+            <span class="metric-value" id="fid-value">Mesure en cours...</span>
+        </div>
+        <div class="metric">
+            <span>Cumulative Layout Shift (CLS)</span>
+            <span class="metric-value" id="cls-value">Mesure en cours...</span>
+        </div>
+        <div class="metric">
+            <span>First Contentful Paint (FCP)</span>
+            <span class="metric-value" id="fcp-value">Mesure en cours...</span>
+        </div>
+        <div class="metric">
+            <span>Time to Interactive (TTI)</span>
+            <span class="metric-value" id="tti-value">Mesure en cours...</span>
+        </div>
+    </div>
+
+    <div class="perf-container">
+        <h2>🔄 Test de Re-renders</h2>
+        <button class="btn btn-primary" onclick="testReRenders()">Tester Re-renders</button>
+        <button class="btn" onclick="testMemoryUsage()">Tester Mémoire</button>
+        <button class="btn" onclick="testBundleSize()">Analyser Bundle</button>
+        
+        <div class="chart" id="render-chart">
+            <!-- Barres de performance -->
+        </div>
+        
+        <div class="metric">
+            <span>Renders par seconde</span>
+            <span class="metric-value" id="renders-per-sec">0</span>
+        </div>
+        <div class="metric">
+            <span>Mémoire utilisée</span>
+            <span class="metric-value" id="memory-usage">0 MB</span>
+        </div>
+        <div class="metric">
+            <span>Taille du bundle</span>
+            <span class="metric-value" id="bundle-size">Calcul...</span>
+        </div>
+    </div>
+
+    <div class="perf-container">
+        <h2>⚡ Tests de Performance Spécifiques</h2>
+        <button class="btn btn-primary" onclick="testProjectCardPerformance()">Test ProjectCard</button>
+        <button class="btn" onclick="testAlertCalculations()">Test Alertes</button>
+        <button class="btn" onclick="testBudgetCalculations()">Test Budget</button>
+        
+        <div class="log" id="perf-log">Prêt pour les tests de performance...\n</div>
+    </div>
+
+    <script>
+        let performanceData = {
+            renders: [],
+            memory: [],
+            timing: {}
+        };
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('perf-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logDiv.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateMetric(id, value, threshold) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+                
+                // Colorier selon les seuils
+                element.className = 'metric-value';
+                if (threshold) {
+                    if (parseFloat(value) <= threshold.good) {
+                        element.classList.add('good');
+                    } else if (parseFloat(value) <= threshold.warning) {
+                        element.classList.add('warning');
+                    } else {
+                        element.classList.add('poor');
+                    }
+                }
+            }
+        }
+
+        // Mesurer Core Web Vitals
+        function measureCoreWebVitals() {
+            // LCP
+            new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                const lastEntry = entries[entries.length - 1];
+                updateMetric('lcp-value', `${lastEntry.startTime.toFixed(0)}ms`, {
+                    good: 2500,
+                    warning: 4000
+                });
+            }).observe({ entryTypes: ['largest-contentful-paint'] });
+
+            // FID
+            new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                entries.forEach(entry => {
+                    updateMetric('fid-value', `${entry.processingStart - entry.startTime.toFixed(0)}ms`, {
+                        good: 100,
+                        warning: 300
+                    });
+                });
+            }).observe({ entryTypes: ['first-input'] });
+
+            // CLS
+            let clsValue = 0;
+            new PerformanceObserver((entryList) => {
+                for (const entry of entryList.getEntries()) {
+                    if (!entry.hadRecentInput) {
+                        clsValue += entry.value;
+                    }
+                }
+                updateMetric('cls-value', clsValue.toFixed(3), {
+                    good: 0.1,
+                    warning: 0.25
+                });
+            }).observe({ entryTypes: ['layout-shift'] });
+
+            // FCP et TTI via Navigation Timing
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const navigation = performance.getEntriesByType('navigation')[0];
+                    if (navigation) {
+                        updateMetric('fcp-value', `${navigation.domContentLoadedEventEnd.toFixed(0)}ms`, {
+                            good: 1800,
+                            warning: 3000
+                        });
+                        updateMetric('tti-value', `${navigation.loadEventEnd.toFixed(0)}ms`, {
+                            good: 3800,
+                            warning: 7300
+                        });
+                    }
+                }, 1000);
+            });
+        }
+
+        function testReRenders() {
+            log('🔄 Test des re-renders en cours...');
+            
+            let renderCount = 0;
+            const startTime = performance.now();
+            
+            // Simuler des changements d'état rapides
+            const interval = setInterval(() => {
+                renderCount++;
+                
+                // Simuler un re-render en modifiant le DOM
+                const testDiv = document.createElement('div');
+                testDiv.style.display = 'none';
+                document.body.appendChild(testDiv);
+                document.body.removeChild(testDiv);
+                
+                if (renderCount >= 100) {
+                    clearInterval(interval);
+                    const endTime = performance.now();
+                    const duration = endTime - startTime;
+                    const rendersPerSec = (renderCount / (duration / 1000)).toFixed(1);
+                    
+                    updateMetric('renders-per-sec', rendersPerSec);
+                    log(`✅ Test terminé: ${rendersPerSec} renders/sec`, 'success');
+                    
+                    updateRenderChart(rendersPerSec);
+                }
+            }, 10);
+        }
+
+        function testMemoryUsage() {
+            log('💾 Test de l\'utilisation mémoire...');
+            
+            if (performance.memory) {
+                const used = (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(1);
+                const total = (performance.memory.totalJSHeapSize / 1024 / 1024).toFixed(1);
+                
+                updateMetric('memory-usage', `${used} MB`);
+                log(`✅ Mémoire: ${used}MB utilisés sur ${total}MB`, 'success');
+            } else {
+                log('⚠️ API Memory non disponible', 'warning');
+            }
+        }
+
+        function testBundleSize() {
+            log('📦 Analyse de la taille du bundle...');
+            
+            // Estimer la taille via les ressources chargées
+            const resources = performance.getEntriesByType('resource');
+            let totalSize = 0;
+            
+            resources.forEach(resource => {
+                if (resource.transferSize) {
+                    totalSize += resource.transferSize;
+                }
+            });
+            
+            const sizeMB = (totalSize / 1024 / 1024).toFixed(2);
+            updateMetric('bundle-size', `${sizeMB} MB`);
+            log(`✅ Taille estimée du bundle: ${sizeMB}MB`, 'success');
+        }
+
+        function testProjectCardPerformance() {
+            log('📁 Test performance ProjectCard...');
+            
+            const startTime = performance.now();
+            
+            // Simuler le rendu de 100 cartes de projet
+            for (let i = 0; i < 100; i++) {
+                // Simuler les calculs de ProjectCard
+                const mockProject = {
+                    id: `project-${i}`,
+                    date_fin: new Date(Date.now() + i * 24 * 60 * 60 * 1000),
+                    taches: Array.from({ length: 10 }, (_, j) => ({
+                        id: `task-${j}`,
+                        etat: Math.random() > 0.5 ? 'cloturee' : 'en_cours'
+                    }))
+                };
+                
+                // Simuler les calculs d'alerte
+                const daysUntil = Math.ceil((mockProject.date_fin.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                const isApproaching = daysUntil <= 7;
+                const hasOpenTasks = mockProject.taches.some(t => t.etat !== 'cloturee');
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            
+            log(`✅ 100 ProjectCards simulées en ${duration.toFixed(2)}ms`, 'success');
+            log(`📊 Moyenne: ${(duration / 100).toFixed(2)}ms par carte`, 'info');
+        }
+
+        function testAlertCalculations() {
+            log('🔔 Test performance calculs d\'alertes...');
+            
+            const startTime = performance.now();
+            
+            // Simuler 1000 calculs d'alerte
+            for (let i = 0; i < 1000; i++) {
+                const endDate = new Date(Date.now() + i * 24 * 60 * 60 * 1000);
+                const today = new Date();
+                const daysUntil = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                const isApproaching = daysUntil <= 7;
+                const severity = daysUntil < 0 ? 'danger' : daysUntil <= 2 ? 'danger' : daysUntil <= 5 ? 'warning' : 'info';
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            
+            log(`✅ 1000 calculs d\'alertes en ${duration.toFixed(2)}ms`, 'success');
+            log(`📊 Moyenne: ${(duration / 1000).toFixed(3)}ms par calcul`, 'info');
+        }
+
+        function testBudgetCalculations() {
+            log('💰 Test performance calculs budgétaires...');
+            
+            const startTime = performance.now();
+            
+            // Simuler 500 calculs budgétaires
+            for (let i = 0; i < 500; i++) {
+                const budget = 50000 + i * 1000;
+                const expenses = Array.from({ length: 10 }, (_, j) => ({
+                    montant: Math.random() * 5000
+                }));
+                
+                const totalExpenses = expenses.reduce((sum, exp) => sum + exp.montant, 0);
+                const percentage = (totalExpenses / budget) * 100;
+                const remaining = budget - totalExpenses;
+                const status = percentage < 50 ? 'success' : percentage < 80 ? 'warning' : 'danger';
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            
+            log(`✅ 500 calculs budgétaires en ${duration.toFixed(2)}ms`, 'success');
+            log(`📊 Moyenne: ${(duration / 500).toFixed(3)}ms par calcul`, 'info');
+        }
+
+        function updateRenderChart(rendersPerSec) {
+            const chart = document.getElementById('render-chart');
+            chart.innerHTML = '';
+            
+            // Créer des barres pour visualiser les performances
+            const maxHeight = 180;
+            const targetRPS = 60; // 60 FPS idéal
+            
+            for (let i = 0; i < 10; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                
+                // Hauteur basée sur les performances
+                const height = Math.min((rendersPerSec / targetRPS) * maxHeight, maxHeight);
+                bar.style.height = `${height}px`;
+                
+                // Couleur selon les performances
+                if (rendersPerSec >= 50) {
+                    bar.style.background = '#10b981'; // Vert
+                } else if (rendersPerSec >= 30) {
+                    bar.style.background = '#f59e0b'; // Orange
+                } else {
+                    bar.style.background = '#ef4444'; // Rouge
+                }
+                
+                chart.appendChild(bar);
+            }
+        }
+
+        // Initialisation
+        window.onload = function() {
+            log('🚀 Test de performance initialisé');
+            measureCoreWebVitals();
+            
+            // Test automatique de la mémoire
+            setTimeout(testMemoryUsage, 2000);
+            setTimeout(testBundleSize, 3000);
+        };
+    </script>
+</body>
+</html>
