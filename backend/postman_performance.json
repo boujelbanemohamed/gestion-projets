@@ -1,0 +1,349 @@
+{
+  "name": "📊 Performance Analytics",
+  "item": [
+    {
+      "name": "Performance by Department",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has departments performance array\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('departments');",
+              "    pm.expect(response.departments).to.be.an('array');",
+              "});",
+              "",
+              "pm.test(\"Each department has required fields\", function () {",
+              "    const response = pm.response.json();",
+              "    if (response.departments.length > 0) {",
+              "        const dept = response.departments[0];",
+              "        pm.expect(dept).to.have.property('id');",
+              "        pm.expect(dept).to.have.property('nom');",
+              "        pm.expect(dept).to.have.property('totalTasks');",
+              "        pm.expect(dept).to.have.property('completedTasks');",
+              "        pm.expect(dept).to.have.property('inProgressTasks');",
+              "        pm.expect(dept).to.have.property('completionRate');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/performance/departments?startDate=2024-01-01&endDate=2024-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "performance", "departments"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Performance by User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has users performance array\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('users');",
+              "    pm.expect(response.users).to.be.an('array');",
+              "});",
+              "",
+              "pm.test(\"Each user has required fields\", function () {",
+              "    const response = pm.response.json();",
+              "    if (response.users.length > 0) {",
+              "        const user = response.users[0];",
+              "        pm.expect(user).to.have.property('id');",
+              "        pm.expect(user).to.have.property('nom');",
+              "        pm.expect(user).to.have.property('prenom');",
+              "        pm.expect(user).to.have.property('assignedProjects');",
+              "        pm.expect(user).to.have.property('totalTasks');",
+              "        pm.expect(user).to.have.property('completedTasks');",
+              "        pm.expect(user).to.have.property('remainingTasks');",
+              "        pm.expect(user).to.have.property('completionRate');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/performance/users?startDate=2024-01-01&endDate=2024-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "performance", "users"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Performance by Project",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has projects performance array\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('projects');",
+              "    pm.expect(response.projects).to.be.an('array');",
+              "});",
+              "",
+              "pm.test(\"Each project has required fields\", function () {",
+              "    const response = pm.response.json();",
+              "    if (response.projects.length > 0) {",
+              "        const project = response.projects[0];",
+              "        pm.expect(project).to.have.property('id');",
+              "        pm.expect(project).to.have.property('nom');",
+              "        pm.expect(project).to.have.property('totalTasks');",
+              "        pm.expect(project).to.have.property('completedTasks');",
+              "        pm.expect(project).to.have.property('notCompletedTasks');",
+              "        pm.expect(project).to.have.property('completionRate');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/performance/projects?startDate=2024-01-01&endDate=2024-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "performance", "projects"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Budget Consumption by Project",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has budget consumption array\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('budgetConsumption');",
+              "    pm.expect(response.budgetConsumption).to.be.an('array');",
+              "});",
+              "",
+              "pm.test(\"Each project has budget fields\", function () {",
+              "    const response = pm.response.json();",
+              "    if (response.budgetConsumption.length > 0) {",
+              "        const budget = response.budgetConsumption[0];",
+              "        pm.expect(budget).to.have.property('projectId');",
+              "        pm.expect(budget).to.have.property('projectName');",
+              "        pm.expect(budget).to.have.property('initialBudget');",
+              "        pm.expect(budget).to.have.property('totalExpenses');",
+              "        pm.expect(budget).to.have.property('remainingAmount');",
+              "        pm.expect(budget).to.have.property('consumptionRate');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/performance/budget?startDate=2024-01-01&endDate=2024-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "performance", "budget"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Closed Projects",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has closed projects array\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('closedProjects');",
+              "    pm.expect(response.closedProjects).to.be.an('array');",
+              "});",
+              "",
+              "pm.test(\"Each closed project has required fields\", function () {",
+              "    const response = pm.response.json();",
+              "    if (response.closedProjects.length > 0) {",
+              "        const project = response.closedProjects[0];",
+              "        pm.expect(project).to.have.property('id');",
+              "        pm.expect(project).to.have.property('nom');",
+              "        pm.expect(project).to.have.property('dateCloture');",
+              "        pm.expect(project).to.have.property('totalTasks');",
+              "        pm.expect(project).to.have.property('completedTasks');",
+              "        pm.expect(project).to.have.property('completionRate');",
+              "        pm.expect(project).to.have.property('budgetConsumptionRate');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/performance/closed-projects?startDate=2024-01-01&endDate=2024-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "performance", "closed-projects"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Performance Summary",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has performance summary\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('summary');",
+              "    pm.expect(response.summary).to.have.property('totalProjects');",
+              "    pm.expect(response.summary).to.have.property('activeProjects');",
+              "    pm.expect(response.summary).to.have.property('closedProjects');",
+              "    pm.expect(response.summary).to.have.property('totalTasks');",
+              "    pm.expect(response.summary).to.have.property('completedTasks');",
+              "    pm.expect(response.summary).to.have.property('overallCompletionRate');",
+              "    pm.expect(response.summary).to.have.property('averageBudgetConsumption');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/performance/summary?startDate=2024-01-01&endDate=2024-12-31",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "performance", "summary"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31"
+            }
+          ]
+        }
+      }
+    }
+  ]
+} 

@@ -1,0 +1,147 @@
+{
+  "info": {
+    "name": "GestionProjet API Tests",
+    "description": "Configuration pour les tests automatisés de l'API GestionProjet",
+    "version": "1.0.0"
+  },
+  "options": {
+    "reporter": {
+      "cli": {
+        "enabled": true,
+        "options": {
+          "verbose": true
+        }
+      },
+      "json": {
+        "enabled": true,
+        "options": {
+          "export": "./results.json"
+        }
+      },
+      "html": {
+        "enabled": true,
+        "options": {
+          "export": "./results.html"
+        }
+      }
+    },
+    "ssl": {
+      "strictSSL": false
+    },
+    "timeout": {
+      "request": 30000,
+      "response": 30000
+    },
+    "delay": {
+      "request": 1000
+    },
+    "iterationCount": 1,
+    "continueOnFailure": true,
+    "stopOnFailure": false,
+    "bail": {
+      "enabled": false
+    },
+    "color": true,
+    "silent": false
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "projectId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "commentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "uploadId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log de la requête",
+          "console.log(`🔄 ${pm.request.method} ${pm.request.url}`);",
+          "",
+          "// Ajout automatique du token d'authentification si disponible",
+          "if (pm.collectionVariables.get('authToken') && pm.request.headers.has('Authorization') === false) {",
+          "    pm.request.headers.add({",
+          "        key: 'Authorization',",
+          "        value: `Bearer ${pm.collectionVariables.get('authToken')}`",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Log de la réponse",
+          "console.log(`✅ ${pm.response.status} - ${pm.response.responseTime}ms`);",
+          "",
+          "// Test de performance",
+          "pm.test('Response time is less than 2 seconds', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "// Test de taille de réponse",
+          "pm.test('Response size is reasonable', function () {",
+          "    const responseSize = pm.response.size().response;",
+          "    pm.expect(responseSize).to.be.below(1048576); // 1MB",
+          "});",
+          "",
+          "// Test de structure JSON",
+          "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+          "    pm.test('Response is valid JSON', function () {",
+          "        pm.response.to.be.json;",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+} 

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend API</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Test de l'API Rubriques depuis le Frontend</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                console.log('Testing API connection...');
+                resultsDiv.innerHTML += '<p>🔄 Test de connexion à l\'API...</p>';
+                
+                // Test GET rubriques
+                const response = await axios.get('/api/rubriques');
+                console.log('API Response:', response.data);
+                
+                resultsDiv.innerHTML += '<p>✅ Connexion réussie!</p>';
+                resultsDiv.innerHTML += '<p><strong>Rubriques trouvées:</strong></p>';
+                resultsDiv.innerHTML += '<ul>';
+                
+                if (Array.isArray(response.data) && response.data.length > 0) {
+                    response.data.forEach(rubrique => {
+                        resultsDiv.innerHTML += `<li>${rubrique.nom} (ID: ${rubrique.id})</li>`;
+                    });
+                } else {
+                    resultsDiv.innerHTML += '<li>Aucune rubrique trouvée</li>';
+                }
+                
+                resultsDiv.innerHTML += '</ul>';
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                resultsDiv.innerHTML += `<p>❌ Erreur: ${error.message}</p>`;
+                if (error.response) {
+                    resultsDiv.innerHTML += `<p>Status: ${error.response.status}</p>`;
+                    resultsDiv.innerHTML += `<p>Data: ${JSON.stringify(error.response.data)}</p>`;
+                }
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

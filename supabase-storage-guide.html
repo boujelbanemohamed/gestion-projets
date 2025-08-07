@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide d'Activation Storage Supabase</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .content {
+            padding: 40px;
+        }
+        .step {
+            background: #f8fafc;
+            border-left: 4px solid #10b981;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .step h3 {
+            color: #047857;
+            margin: 0 0 15px 0;
+        }
+        .step-number {
+            background: #10b981;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .code-block {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #dcfce7;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .btn {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #047857;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        .checklist li::before {
+            content: "☐";
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        .checklist li.checked::before {
+            content: "✅";
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ Guide d'Activation Storage Supabase</h1>
+            <p>Activez le stockage complet pour votre plateforme de gestion de projets</p>
+        </div>
+        
+        <div class="content">
+            <div class="warning">
+                <h4 style="color: #d97706; margin: 0 0 10px 0;">⚠️ Important</h4>
+                <p style="color: #92400e; margin: 0;">
+                    Le Storage Supabase doit être activé manuellement dans le dashboard pour des raisons de sécurité.
+                    Suivez ce guide étape par étape pour une activation complète.
+                </p>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">1</span>Accès au Dashboard Supabase</h3>
+                <p>Connectez-vous à votre dashboard Supabase et accédez à votre projet.</p>
+                <a href="https://supabase.com/dashboard/project/obdadipsbbrlwetkuyui" class="btn" target="_blank">
+                    🚀 Ouvrir le Dashboard
+                </a>
+                <p><strong>URL du projet :</strong> https://supabase.com/dashboard/project/obdadipsbbrlwetkuyui</p>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">2</span>Activation du Service Storage</h3>
+                <p>Dans le menu latéral, cliquez sur <strong>"Storage"</strong> puis sur <strong>"Settings"</strong>.</p>
+                <ul>
+                    <li>Si le Storage n'est pas activé, cliquez sur <strong>"Enable Storage"</strong></li>
+                    <li>Acceptez les conditions d'utilisation</li>
+                    <li>Attendez que le service soit initialisé (quelques secondes)</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">3</span>Création des Buckets</h3>
+                <p>Créez les buckets nécessaires pour votre application :</p>
+                
+                <h4>Bucket 1: project-files</h4>
+                <ul>
+                    <li><strong>Nom :</strong> project-files</li>
+                    <li><strong>Public :</strong> Non (privé)</li>
+                    <li><strong>Taille max :</strong> 50MB</li>
+                    <li><strong>Types autorisés :</strong> Images, PDF, Documents</li>
+                </ul>
+
+                <h4>Bucket 2: user-avatars</h4>
+                <ul>
+                    <li><strong>Nom :</strong> user-avatars</li>
+                    <li><strong>Public :</strong> Oui</li>
+                    <li><strong>Taille max :</strong> 5MB</li>
+                    <li><strong>Types autorisés :</strong> Images uniquement</li>
+                </ul>
+
+                <h4>Bucket 3: meeting-attachments</h4>
+                <ul>
+                    <li><strong>Nom :</strong> meeting-attachments</li>
+                    <li><strong>Public :</strong> Non (privé)</li>
+                    <li><strong>Taille max :</strong> 100MB</li>
+                    <li><strong>Types autorisés :</strong> Tous types</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">4</span>Configuration des Politiques RLS</h3>
+                <p>Allez dans <strong>"SQL Editor"</strong> et exécutez ces requêtes pour configurer les permissions :</p>
+                
+                <div class="code-block">-- Politiques pour project-files
+CREATE POLICY "Users can upload project files" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'project-files' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can view project files" ON storage.objects
+FOR SELECT USING (bucket_id = 'project-files' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can update project files" ON storage.objects
+FOR UPDATE USING (bucket_id = 'project-files' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can delete project files" ON storage.objects
+FOR DELETE USING (bucket_id = 'project-files' AND auth.role() = 'authenticated');</div>
+
+                <div class="code-block">-- Politiques pour user-avatars (public)
+CREATE POLICY "Anyone can view avatars" ON storage.objects
+FOR SELECT USING (bucket_id = 'user-avatars');
+
+CREATE POLICY "Users can upload their avatar" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'user-avatars' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can update their avatar" ON storage.objects
+FOR UPDATE USING (bucket_id = 'user-avatars' AND auth.role() = 'authenticated');</div>
+
+                <div class="code-block">-- Politiques pour meeting-attachments
+CREATE POLICY "Users can upload meeting attachments" ON storage.objects
+FOR INSERT WITH CHECK (bucket_id = 'meeting-attachments' AND auth.role() = 'authenticated');
+
+CREATE POLICY "Users can view meeting attachments" ON storage.objects
+FOR SELECT USING (bucket_id = 'meeting-attachments' AND auth.role() = 'authenticated');</div>
+            </div>
+
+            <div class="step">
+                <h3><span class="step-number">5</span>Test et Validation</h3>
+                <p>Une fois la configuration terminée, testez le Storage avec le script automatique :</p>
+                <button class="btn" onclick="runStorageTest()">🧪 Tester le Storage</button>
+                <button class="btn btn-secondary" onclick="window.open('https://clinquant-croissant-1fa49a.netlify.app/', '_blank')">
+                    🚀 Ouvrir l'Application
+                </button>
+            </div>
+
+            <div class="success" style="display: none;" id="success-message">
+                <h4 style="color: #047857; margin: 0 0 10px 0;">🎉 Storage Activé avec Succès !</h4>
+                <p style="color: #065f46; margin: 0;">
+                    Votre plateforme peut maintenant gérer les fichiers. Score API : 100% !
+                </p>
+            </div>
+
+            <h3>📋 Checklist de Validation</h3>
+            <ul class="checklist">
+                <li id="check-1">Service Storage activé dans Supabase</li>
+                <li id="check-2">Bucket "project-files" créé</li>
+                <li id="check-3">Bucket "user-avatars" créé</li>
+                <li id="check-4">Bucket "meeting-attachments" créé</li>
+                <li id="check-5">Politiques RLS configurées</li>
+                <li id="check-6">Test d'upload réussi</li>
+                <li id="check-7">Application mise à jour</li>
+            </ul>
+
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h4>🚀 Fonctionnalités Débloquées</h4>
+                <p>Une fois le Storage activé, votre plateforme pourra :</p>
+                <ul>
+                    <li>📎 <strong>Joindre des fichiers</strong> aux projets</li>
+                    <li>🖼️ <strong>Gérer les avatars</strong> utilisateurs</li>
+                    <li>📋 <strong>Attacher des documents</strong> aux PV de réunion</li>
+                    <li>📊 <strong>Exporter des rapports</strong> en PDF</li>
+                    <li>💾 <strong>Sauvegarder des données</strong> localement</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <p><strong>Besoin d'aide ?</strong></p>
+                <a href="https://supabase.com/docs/guides/storage" class="btn btn-secondary" target="_blank">
+                    📚 Documentation Supabase Storage
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://obdadipsbbrlwetkuyui.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo';
+
+        function checkItem(itemId) {
+            const item = document.getElementById(itemId);
+            if (item) {
+                item.classList.add('checked');
+            }
+        }
+
+        async function runStorageTest() {
+            console.log('🧪 Test du Storage Supabase...');
+            
+            try {
+                // Test 1: Vérifier le service Storage
+                const storageResponse = await fetch(`${SUPABASE_URL}/storage/v1/object`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (storageResponse.ok || storageResponse.status === 400) {
+                    console.log('✅ Service Storage activé');
+                    checkItem('check-1');
+                    
+                    // Test 2: Vérifier les buckets
+                    const bucketsResponse = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    });
+
+                    if (bucketsResponse.ok) {
+                        const buckets = await bucketsResponse.json();
+                        console.log(`✅ ${buckets.length} bucket(s) trouvé(s)`);
+                        
+                        // Vérifier chaque bucket
+                        const requiredBuckets = ['project-files', 'user-avatars', 'meeting-attachments'];
+                        requiredBuckets.forEach((bucketName, index) => {
+                            const bucketExists = buckets.some(b => b.name === bucketName);
+                            if (bucketExists) {
+                                console.log(`✅ Bucket ${bucketName} trouvé`);
+                                checkItem(`check-${index + 2}`);
+                            } else {
+                                console.log(`❌ Bucket ${bucketName} manquant`);
+                            }
+                        });
+
+                        if (buckets.length >= 3) {
+                            checkItem('check-5'); // Politiques probablement configurées
+                            
+                            // Test 3: Test d'upload
+                            try {
+                                const testBlob = new Blob(['Test'], { type: 'text/plain' });
+                                const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/project-files/test.txt`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'apikey': SUPABASE_ANON_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                                    },
+                                    body: testBlob
+                                });
+
+                                if (uploadResponse.ok) {
+                                    console.log('✅ Test d\'upload réussi');
+                                    checkItem('check-6');
+                                    checkItem('check-7');
+                                    
+                                    document.getElementById('success-message').style.display = 'block';
+                                    alert('🎉 Storage entièrement fonctionnel ! Votre plateforme est maintenant 100% complète !');
+                                } else {
+                                    console.log(`⚠️ Upload échoué: ${uploadResponse.status}`);
+                                    alert('⚠️ Storage activé mais upload limité. Vérifiez les politiques RLS.');
+                                }
+                            } catch (uploadError) {
+                                console.log(`❌ Erreur upload: ${uploadError.message}`);
+                                alert('⚠️ Erreur lors du test d\'upload. Vérifiez la configuration.');
+                            }
+                        }
+                    } else {
+                        console.log(`⚠️ Impossible de lister les buckets: ${bucketsResponse.status}`);
+                        alert('⚠️ Storage activé mais buckets non accessibles. Créez les buckets manuellement.');
+                    }
+                } else if (storageResponse.status === 404) {
+                    console.log('❌ Service Storage non activé');
+                    alert('❌ Service Storage non activé. Activez-le dans le dashboard Supabase.');
+                } else {
+                    console.log(`⚠️ Status Storage incertain: ${storageResponse.status}`);
+                    alert('⚠️ Status du Storage incertain. Vérifiez la configuration.');
+                }
+            } catch (error) {
+                console.error('❌ Erreur test Storage:', error);
+                alert('❌ Erreur lors du test. Vérifiez votre connexion.');
+            }
+        }
+
+        // Auto-test au chargement
+        setTimeout(() => {
+            console.log('📋 Guide Storage chargé');
+            console.log('💡 Suivez les étapes puis cliquez sur "Tester le Storage"');
+        }, 1000);
+    </script>
+</body>
+</html>

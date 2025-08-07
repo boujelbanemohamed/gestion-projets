@@ -1,0 +1,56 @@
+[
+  {
+    "id": "5d906565-8efc-4332-b713-02920034c9e4",
+    "nom": "Matériel informatique",
+    "created_at": "2025-08-05T11:07:46.124Z",
+    "updated_at": "2025-08-05T11:07:46.124Z"
+  },
+  {
+    "id": "12c88414-ff3e-44e0-991b-fafa03fe798e",
+    "nom": "Logiciels et licences",
+    "created_at": "2025-08-05T11:07:46.176Z",
+    "updated_at": "2025-08-05T11:07:46.176Z"
+  },
+  {
+    "id": "e2a65b89-efc4-4974-b71c-62014447bc3f",
+    "nom": "Formation et développement",
+    "created_at": "2025-08-05T11:07:46.201Z",
+    "updated_at": "2025-08-05T11:07:46.201Z"
+  },
+  {
+    "id": "e1259f8e-c36f-4105-9dfc-093468128515",
+    "nom": "Frais de déplacement",
+    "created_at": "2025-08-05T11:07:46.228Z",
+    "updated_at": "2025-08-05T11:07:46.228Z"
+  },
+  {
+    "id": "3a955467-e3da-4d84-b4e3-e7e52cd51e51",
+    "nom": "Prestations externes",
+    "created_at": "2025-08-05T11:07:46.251Z",
+    "updated_at": "2025-08-05T11:07:46.251Z"
+  },
+  {
+    "id": "ce0f5bf5-90ed-40d5-905d-9330d511c787",
+    "nom": "Fournitures de bureau",
+    "created_at": "2025-08-05T11:07:46.319Z",
+    "updated_at": "2025-08-05T11:07:46.319Z"
+  },
+  {
+    "id": "a0816aea-cfcb-41bd-a8ca-dff915610cdb",
+    "nom": "Télécommunications",
+    "created_at": "2025-08-05T11:07:46.332Z",
+    "updated_at": "2025-08-05T11:07:46.332Z"
+  },
+  {
+    "id": "d65d1eb5-94c0-48af-be27-cea858ec9081",
+    "nom": "Marketing et communication",
+    "created_at": "2025-08-05T11:07:46.340Z",
+    "updated_at": "2025-08-05T11:07:46.340Z"
+  },
+  {
+    "id": "9dfb5ceb-b9f1-499d-bcde-468effc7ba9c",
+    "nom": "test",
+    "created_at": "2025-08-05T11:10:39.333Z",
+    "updated_at": "2025-08-05T11:10:39.333Z"
+  }
+]

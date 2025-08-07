@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Alertes Dynamiques</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .project-simulation {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 10px 0;
+            background: white;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+            color: #92400e;
+        }
+        .alert-danger {
+            background-color: #fee2e2;
+            border-color: #f87171;
+            color: #dc2626;
+        }
+        .alert-none {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        .control-panel {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .slider-container {
+            margin: 20px 0;
+        }
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+        }
+        .threshold-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3b82f6;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .project-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .project-date {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .explanation {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .changes-indicator {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            font-weight: 500;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Test des Alertes Dynamiques</h1>
+    
+    <div class="explanation">
+        <h3>📋 Objectif du Test</h3>
+        <p>Ce test vérifie que lorsque vous changez le seuil d'alerte, tous les éléments se mettent à jour automatiquement :</p>
+        <ul>
+            <li><strong>Messages d'alerte</strong> : Le texte affiché</li>
+            <li><strong>Couleurs</strong> : La couleur de l'alerte (rouge, orange, bleu)</li>
+            <li><strong>Visibilité</strong> : Quelles alertes sont affichées ou masquées</li>
+            <li><strong>Étiquettes</strong> : Les badges de statut</li>
+        </ul>
+    </div>
+
+    <div class="control-panel">
+        <h2>🎛️ Contrôle du Seuil d'Alerte</h2>
+        <div class="slider-container">
+            <label for="threshold-slider">Seuil d'alerte (en jours) :</label>
+            <div class="threshold-display" id="threshold-display">7</div>
+            <input type="range" id="threshold-slider" class="slider" min="1" max="30" value="7">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-top: 5px;">
+                <span>1 jour</span>
+                <span>30 jours</span>
+            </div>
+        </div>
+        <div class="changes-indicator" id="changes-indicator" style="display: none;">
+            🔄 Seuil modifié ! Observez les changements ci-dessous...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Projets de Test</h2>
+        <div id="projects-container"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📈 Statistiques des Changements</h2>
+        <div id="stats-container"></div>
+    </div>
+
+    <script>
+        let currentThreshold = 7;
+        let changeCount = 0;
+
+        const AlertSeverity = {
+            INFO: 'info',
+            WARNING: 'warning',
+            DANGER: 'danger'
+        };
+
+        function isProjectApproachingDeadline(endDate, threshold = currentThreshold) {
+            if (!endDate) return false;
+            const today = new Date();
+            const daysUntilDeadline = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            return daysUntilDeadline >= 0 && daysUntilDeadline <= threshold;
+        }
+
+        function isProjectOverdue(endDate) {
+            if (!endDate) return false;
+            const today = new Date();
+            return endDate < today;
+        }
+
+        function getDaysUntilDeadline(endDate) {
+            if (!endDate) return null;
+            const today = new Date();
+            return Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        function getAlertMessage(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return '';
+            
+            if (daysUntilDeadline < 0) {
+                return `Projet en dépassement de délai depuis ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+            } else if (daysUntilDeadline === 0) {
+                return 'Ce projet arrive à échéance aujourd\'hui';
+            } else {
+                return `Ce projet arrive à échéance dans ${daysUntilDeadline} jour${daysUntilDeadline > 1 ? 's' : ''}`;
+            }
+        }
+
+        function getAlertSeverity(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return AlertSeverity.INFO;
+            
+            if (daysUntilDeadline < 0) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 2) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 5) {
+                return AlertSeverity.WARNING;
+            } else {
+                return AlertSeverity.INFO;
+            }
+        }
+
+        function getAlertColorClasses(severity) {
+            switch (severity) {
+                case AlertSeverity.DANGER:
+                    return 'alert-danger';
+                case AlertSeverity.WARNING:
+                    return 'alert-warning';
+                case AlertSeverity.INFO:
+                default:
+                    return 'alert-info';
+            }
+        }
+
+        // Projets de test avec différentes dates
+        const testProjects = [
+            {
+                id: '1',
+                nom: 'Projet Critique',
+                date_fin: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Dans 1 jour
+                description: 'Échéance très proche'
+            },
+            {
+                id: '2',
+                nom: 'Projet en Retard',
+                date_fin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // Il y a 2 jours
+                description: 'Déjà en dépassement'
+            },
+            {
+                id: '3',
+                nom: 'Projet Urgent',
+                date_fin: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Dans 3 jours
+                description: 'Échéance proche'
+            },
+            {
+                id: '4',
+                nom: 'Projet Modéré',
+                date_fin: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Dans 7 jours
+                description: 'Échéance modérée'
+            },
+            {
+                id: '5',
+                nom: 'Projet Planifié',
+                date_fin: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // Dans 15 jours
+                description: 'Échéance éloignée'
+            },
+            {
+                id: '6',
+                nom: 'Projet Futur',
+                date_fin: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), // Dans 25 jours
+                description: 'Échéance très éloignée'
+            }
+        ];
+
+        function calculateProjectAlertData(project) {
+            const daysUntilDeadline = getDaysUntilDeadline(project.date_fin);
+            const isApproaching = isProjectApproachingDeadline(project.date_fin);
+            const isOverdue = isProjectOverdue(project.date_fin);
+            const showAlert = isApproaching || isOverdue;
+            const alertMessage = getAlertMessage(daysUntilDeadline);
+            const alertSeverity = getAlertSeverity(daysUntilDeadline);
+            const alertColorClass = getAlertColorClasses(alertSeverity);
+
+            return {
+                daysUntilDeadline,
+                isApproaching,
+                isOverdue,
+                showAlert,
+                alertMessage,
+                alertSeverity,
+                alertColorClass
+            };
+        }
+
+        function renderProjects() {
+            const container = document.getElementById('projects-container');
+            container.innerHTML = '';
+
+            let alertCount = 0;
+            let severityCount = { danger: 0, warning: 0, info: 0, none: 0 };
+
+            testProjects.forEach(project => {
+                const alertData = calculateProjectAlertData(project);
+                
+                if (alertData.showAlert) alertCount++;
+                if (alertData.showAlert) {
+                    severityCount[alertData.alertSeverity]++;
+                } else {
+                    severityCount.none++;
+                }
+
+                const projectDiv = document.createElement('div');
+                projectDiv.className = 'project-simulation';
+                projectDiv.innerHTML = `
+                    <div class="project-header">
+                        <h3 class="project-title">${project.nom}</h3>
+                        <div class="project-date">
+                            Échéance: ${project.date_fin.toLocaleDateString('fr-FR')}
+                        </div>
+                    </div>
+                    <p style="color: #6b7280; margin: 8px 0;">${project.description}</p>
+                    <p style="font-size: 14px; margin: 8px 0;">
+                        <strong>Jours restants:</strong> ${alertData.daysUntilDeadline !== null ? alertData.daysUntilDeadline : 'N/A'}
+                    </p>
+                    ${alertData.showAlert ? `
+                        <div class="alert ${alertData.alertColorClass}">
+                            <span>${alertData.isOverdue ? '🚨' : '⚠️'}</span>
+                            <span>${alertData.alertMessage}</span>
+                            <span style="margin-left: auto; font-size: 12px; opacity: 0.8;">
+                                Seuil: ${currentThreshold}j
+                            </span>
+                        </div>
+                    ` : `
+                        <div class="alert alert-none">
+                            <span>✅</span>
+                            <span>Aucune alerte - Projet dans les délais</span>
+                            <span style="margin-left: auto; font-size: 12px; opacity: 0.8;">
+                                Seuil: ${currentThreshold}j
+                            </span>
+                        </div>
+                    `}
+                `;
+                container.appendChild(projectDiv);
+            });
+
+            // Mettre à jour les statistiques
+            updateStats(alertCount, severityCount);
+        }
+
+        function updateStats(alertCount, severityCount) {
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                    <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">${alertCount}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Alertes actives</div>
+                    </div>
+                    <div style="background: #fee2e2; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #dc2626;">${severityCount.danger}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Critiques</div>
+                    </div>
+                    <div style="background: #fef3c7; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #92400e;">${severityCount.warning}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Avertissements</div>
+                    </div>
+                    <div style="background: #dbeafe; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #1e40af;">${severityCount.info}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Informations</div>
+                    </div>
+                    <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #166534;">${severityCount.none}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Sans alerte</div>
+                    </div>
+                    <div style="background: #f9fafb; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: #374151;">${changeCount}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Changements</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateThreshold(newThreshold) {
+            currentThreshold = newThreshold;
+            changeCount++;
+            
+            // Afficher l'indicateur de changement
+            const indicator = document.getElementById('changes-indicator');
+            indicator.style.display = 'block';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+
+            // Mettre à jour l'affichage
+            document.getElementById('threshold-display').textContent = newThreshold;
+            renderProjects();
+        }
+
+        // Initialisation
+        window.onload = function() {
+            renderProjects();
+            
+            // Écouter les changements du slider
+            const slider = document.getElementById('threshold-slider');
+            slider.addEventListener('input', function() {
+                updateThreshold(parseInt(this.value));
+            });
+        };
+    </script>
+</body>
+</html>

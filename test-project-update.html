@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width-device-width, initial-scale=1.0">
+    <title>Test Mise à Jour Projet</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .project-info {
+            background: #f0f9ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+            color: #92400e;
+        }
+        .alert-danger {
+            background-color: #fee2e2;
+            border-color: #f87171;
+            color: #dc2626;
+        }
+        .budget-bar {
+            width: 100%;
+            height: 20px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .budget-progress {
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        .bg-green { background-color: #10b981; }
+        .bg-yellow { background-color: #f59e0b; }
+        .bg-red { background-color: #ef4444; }
+        .form-group {
+            margin: 12px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            margin: 4px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .btn:hover {
+            background: #f9fafb;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .changes-log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 Test Mise à Jour Dynamique du Projet</h1>
+    
+    <div class="container">
+        <h2>Simulation de ProjectDetail</h2>
+        <p>Ce test simule la mise à jour dynamique des informations du projet dans ProjectDetail.tsx</p>
+        
+        <div class="project-info">
+            <h3 id="project-title">Site E-commerce</h3>
+            <p><strong>Description:</strong> <span id="project-description">Refonte complète du site e-commerce</span></p>
+            <p><strong>Type:</strong> <span id="project-type">Développement web</span></p>
+            <p><strong>Département:</strong> <span id="project-department">IT</span></p>
+            <p><strong>Date de début:</strong> <span id="project-start-date">15/01/2024</span></p>
+            <p><strong>Date de fin:</strong> <span id="project-end-date">08/08/2025</span></p>
+            <p><strong>Budget:</strong> <span id="project-budget">50 000 €</span></p>
+        </div>
+        
+        <div id="alert-container">
+            <!-- Les alertes apparaîtront ici -->
+        </div>
+        
+        <div id="budget-container">
+            <!-- La barre de budget apparaîtra ici -->
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🛠️ Simuler la Modification du Projet</h2>
+        
+        <div class="test-section">
+            <h3>Informations Générales</h3>
+            <div class="form-group">
+                <label>Nom du projet:</label>
+                <input type="text" id="edit-name" value="Site E-commerce">
+            </div>
+            <div class="form-group">
+                <label>Description:</label>
+                <textarea id="edit-description">Refonte complète du site e-commerce</textarea>
+            </div>
+            <div class="form-group">
+                <label>Type de projet:</label>
+                <input type="text" id="edit-type" value="Développement web">
+            </div>
+            <div class="form-group">
+                <label>Département:</label>
+                <input type="text" id="edit-department" value="IT">
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Dates</h3>
+            <div class="form-group">
+                <label>Date de début:</label>
+                <input type="date" id="edit-start-date" value="2024-01-15">
+            </div>
+            <div class="form-group">
+                <label>Date de fin:</label>
+                <input type="date" id="edit-end-date" value="2025-08-08">
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Budget</h3>
+            <div class="form-group">
+                <label>Budget initial:</label>
+                <input type="number" id="edit-budget" value="50000" step="1000">
+            </div>
+            <div class="form-group">
+                <label>Devise:</label>
+                <select id="edit-currency">
+                    <option value="EUR">EUR (€)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
+                </select>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary" onclick="updateProject()">💾 Mettre à Jour le Projet</button>
+        <button class="btn" onclick="resetProject()">🔄 Réinitialiser</button>
+        
+        <div class="changes-log" id="changes-log">Prêt pour les tests...\n</div>
+    </div>
+
+    <script>
+        // Données du projet (simulation de l'état React)
+        let project = {
+            nom: 'Site E-commerce',
+            description: 'Refonte complète du site e-commerce',
+            type_projet: 'Développement web',
+            departement: 'IT',
+            date_debut: new Date('2024-01-15'),
+            date_fin: new Date('2025-08-08'),
+            budget_initial: 50000,
+            devise: 'EUR',
+            taches: [
+                { id: '1', etat: 'en_cours' },
+                { id: '2', etat: 'en_attente' }
+            ]
+        };
+
+        // Fonctions d'alerte
+        const AlertSeverity = {
+            INFO: 'info',
+            WARNING: 'warning',
+            DANGER: 'danger'
+        };
+
+        function getDaysUntilDeadline(endDate) {
+            if (!endDate) return null;
+            const today = new Date();
+            return Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        function getAlertMessage(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return '';
+            
+            if (daysUntilDeadline < 0) {
+                return `Projet en dépassement de délai depuis ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+            } else if (daysUntilDeadline === 0) {
+                return 'Ce projet arrive à échéance aujourd\'hui';
+            } else {
+                return `Ce projet arrive à échéance dans ${daysUntilDeadline} jour${daysUntilDeadline > 1 ? 's' : ''}`;
+            }
+        }
+
+        function getAlertSeverity(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return AlertSeverity.INFO;
+            
+            if (daysUntilDeadline < 0) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 2) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 5) {
+                return AlertSeverity.WARNING;
+            } else {
+                return AlertSeverity.INFO;
+            }
+        }
+
+        function formatCurrency(amount, currency) {
+            const symbols = { EUR: '€', USD: '$', GBP: '£' };
+            return `${amount.toLocaleString()} ${symbols[currency] || currency}`;
+        }
+
+        function updateDisplay() {
+            // Mettre à jour les informations du projet
+            document.getElementById('project-title').textContent = project.nom;
+            document.getElementById('project-description').textContent = project.description;
+            document.getElementById('project-type').textContent = project.type_projet;
+            document.getElementById('project-department').textContent = project.departement;
+            document.getElementById('project-start-date').textContent = project.date_debut.toLocaleDateString('fr-FR');
+            document.getElementById('project-end-date').textContent = project.date_fin.toLocaleDateString('fr-FR');
+            document.getElementById('project-budget').textContent = formatCurrency(project.budget_initial, project.devise);
+
+            // Mettre à jour les alertes
+            updateAlerts();
+            
+            // Mettre à jour le budget
+            updateBudget();
+        }
+
+        function updateAlerts() {
+            const daysUntilDeadline = getDaysUntilDeadline(project.date_fin);
+            const alertMessage = getAlertMessage(daysUntilDeadline);
+            const alertSeverity = getAlertSeverity(daysUntilDeadline);
+            
+            const alertContainer = document.getElementById('alert-container');
+            
+            if (daysUntilDeadline !== null && (daysUntilDeadline <= 7 || daysUntilDeadline < 0)) {
+                const alertClass = alertSeverity === 'danger' ? 'alert-danger' : 
+                                 alertSeverity === 'warning' ? 'alert-warning' : 'alert-info';
+                
+                alertContainer.innerHTML = `
+                    <div class="alert ${alertClass}">
+                        <span>${daysUntilDeadline < 0 ? '🚨' : '⚠️'}</span>
+                        <span>${alertMessage}</span>
+                    </div>
+                `;
+            } else {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        <span>✅</span>
+                        <span>Aucune alerte - Projet dans les délais</span>
+                    </div>
+                `;
+            }
+        }
+
+        function updateBudget() {
+            const budgetContainer = document.getElementById('budget-container');
+            
+            if (project.budget_initial && project.devise) {
+                // Simulation des dépenses (30% du budget)
+                const depenses = project.budget_initial * 0.3;
+                const pourcentage = (depenses / project.budget_initial) * 100;
+                const restant = project.budget_initial - depenses;
+                
+                const colorClass = pourcentage < 50 ? 'bg-green' : 
+                                  pourcentage < 80 ? 'bg-yellow' : 'bg-red';
+                
+                budgetContainer.innerHTML = `
+                    <div style="background: white; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <h4>💰 Progression Budgétaire</h4>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Budget: ${formatCurrency(project.budget_initial, project.devise)}</span>
+                            <span>${pourcentage.toFixed(1)}%</span>
+                        </div>
+                        <div class="budget-bar">
+                            <div class="budget-progress ${colorClass}" style="width: ${pourcentage}%"></div>
+                        </div>
+                        <div style="font-size: 12px; color: #6b7280;">
+                            Dépensé: ${formatCurrency(depenses, project.devise)} | 
+                            Restant: ${formatCurrency(restant, project.devise)}
+                        </div>
+                    </div>
+                `;
+            } else {
+                budgetContainer.innerHTML = `
+                    <div style="background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <span>💰 Aucun budget défini</span>
+                    </div>
+                `;
+            }
+        }
+
+        function updateProject() {
+            const oldProject = { ...project };
+            
+            // Récupérer les nouvelles valeurs
+            project.nom = document.getElementById('edit-name').value;
+            project.description = document.getElementById('edit-description').value;
+            project.type_projet = document.getElementById('edit-type').value;
+            project.departement = document.getElementById('edit-department').value;
+            project.date_debut = new Date(document.getElementById('edit-start-date').value);
+            project.date_fin = new Date(document.getElementById('edit-end-date').value);
+            project.budget_initial = parseFloat(document.getElementById('edit-budget').value) || 0;
+            project.devise = document.getElementById('edit-currency').value;
+            
+            // Logger les changements
+            logChange('🔄 Projet mis à jour');
+            
+            const changes = [];
+            if (oldProject.nom !== project.nom) changes.push(`Nom: "${oldProject.nom}" → "${project.nom}"`);
+            if (oldProject.description !== project.description) changes.push(`Description modifiée`);
+            if (oldProject.date_fin.getTime() !== project.date_fin.getTime()) {
+                changes.push(`Date fin: ${oldProject.date_fin.toLocaleDateString()} → ${project.date_fin.toLocaleDateString()}`);
+            }
+            if (oldProject.budget_initial !== project.budget_initial) {
+                changes.push(`Budget: ${oldProject.budget_initial} → ${project.budget_initial}`);
+            }
+            if (oldProject.devise !== project.devise) changes.push(`Devise: ${oldProject.devise} → ${project.devise}`);
+            
+            changes.forEach(change => logChange(`  • ${change}`));
+            
+            // Mettre à jour l'affichage (simulation du re-render React)
+            updateDisplay();
+            
+            logChange('✅ Affichage mis à jour dynamiquement');
+        }
+
+        function resetProject() {
+            // Réinitialiser aux valeurs par défaut
+            document.getElementById('edit-name').value = 'Site E-commerce';
+            document.getElementById('edit-description').value = 'Refonte complète du site e-commerce';
+            document.getElementById('edit-type').value = 'Développement web';
+            document.getElementById('edit-department').value = 'IT';
+            document.getElementById('edit-start-date').value = '2024-01-15';
+            document.getElementById('edit-end-date').value = '2025-08-08';
+            document.getElementById('edit-budget').value = '50000';
+            document.getElementById('edit-currency').value = 'EUR';
+            
+            updateProject();
+            logChange('🔄 Projet réinitialisé');
+        }
+
+        function logChange(message) {
+            const logDiv = document.getElementById('changes-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // Initialisation
+        window.onload = function() {
+            updateDisplay();
+            logChange('🚀 Test de mise à jour dynamique initialisé');
+            logChange('💡 Modifiez les champs et cliquez sur "Mettre à Jour" pour voir les changements');
+        };
+    </script>
+</body>
+</html>

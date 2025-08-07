@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification des Données Supabase</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        .table-section {
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-header {
+            background: #f8fafc;
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .status-pass { background: #dcfce7; color: #166534; }
+        .status-fail { background: #fef2f2; color: #dc2626; }
+        .status-loading { background: #dbeafe; color: #1e40af; }
+        .table-content {
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .record {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.875rem;
+        }
+        .record:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-weight: 600;
+        }
+        .btn:hover { background: #4338ca; }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover { background: #4b5563; }
+        .summary {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        .log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ Vérification des Données Supabase</h1>
+            <p>Contrôle de l'intégrité des données mockées dans la base de données</p>
+        </div>
+        
+        <div class="content">
+            <div style="text-align: center;">
+                <button class="btn" onclick="checkAllData()">🔍 Vérifier Toutes les Données</button>
+                <button class="btn btn-secondary" onclick="showLog()">📋 Afficher les Logs</button>
+                <button class="btn btn-secondary" onclick="clearResults()">🗑️ Effacer</button>
+            </div>
+            
+            <div id="summary" class="summary" style="display: none;">
+                <h3>📊 Résumé de la Vérification</h3>
+                <div id="summary-content"></div>
+            </div>
+            
+            <div id="tables-container"></div>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://obdadipsbbrlwetkuyui.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo';
+        
+        const expectedData = {
+            departments: {
+                name: 'Départements',
+                table: 'departments',
+                expectedCount: 5,
+                expectedRecords: ['IT', 'Design', 'Marketing', 'Qualité', 'RH']
+            },
+            users: {
+                name: 'Utilisateurs',
+                table: 'users',
+                expectedCount: 5,
+                expectedRecords: [
+                    'marie.dupont@example.com (SUPER_ADMIN)',
+                    'pierre.martin@example.com (ADMIN)',
+                    'sophie.lemoine@example.com (UTILISATEUR)',
+                    'jean.moreau@example.com (UTILISATEUR)',
+                    'alice.rousseau@example.com (UTILISATEUR)'
+                ]
+            },
+            projects: {
+                name: 'Projets',
+                table: 'projects',
+                expectedCount: 3,
+                expectedRecords: [
+                    'Refonte Site Web',
+                    'Application Mobile',
+                    'Migration Base de Données'
+                ]
+            },
+            meeting_minutes: {
+                name: 'PV de Réunion',
+                table: 'meeting_minutes',
+                expectedCount: 0, // Peut être vide initialement
+                expectedRecords: []
+            }
+        };
+
+        let checkResults = {};
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.textContent += new Date().toLocaleTimeString() + ' - ' + message + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function showLog() {
+            const logDiv = document.getElementById('log');
+            logDiv.style.display = logDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function checkTable(tableKey, tableInfo) {
+            log(`🔍 Vérification de la table ${tableInfo.name}...`);
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/${tableInfo.table}?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        log(`⚠️ Table ${tableInfo.name}: Accès restreint (RLS activé)`);
+                        return {
+                            status: 'restricted',
+                            count: 'N/A',
+                            records: [],
+                            message: 'Accès restreint par RLS'
+                        };
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                }
+
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : 0;
+                
+                log(`✅ Table ${tableInfo.name}: ${count} enregistrements trouvés`);
+                
+                // Extraire les informations pertinentes
+                let records = [];
+                if (Array.isArray(data)) {
+                    records = data.map(record => {
+                        if (tableKey === 'departments') {
+                            return record.nom || record.name || 'Sans nom';
+                        } else if (tableKey === 'users') {
+                            return `${record.email || 'Sans email'} (${record.role || 'Sans rôle'})`;
+                        } else if (tableKey === 'projects') {
+                            return record.nom || record.name || record.title || 'Sans nom';
+                        } else if (tableKey === 'meeting_minutes') {
+                            return `${record.titre || 'Sans titre'} - ${new Date(record.created_at).toLocaleDateString()}`;
+                        }
+                        return JSON.stringify(record).substring(0, 50) + '...';
+                    });
+                }
+
+                const status = count >= tableInfo.expectedCount ? 'pass' : 'partial';
+                
+                return {
+                    status: status,
+                    count: count,
+                    records: records,
+                    message: `${count} enregistrements`
+                };
+
+            } catch (error) {
+                log(`❌ Erreur table ${tableInfo.name}: ${error.message}`);
+                return {
+                    status: 'fail',
+                    count: 0,
+                    records: [],
+                    message: `Erreur: ${error.message}`
+                };
+            }
+        }
+
+        function displayResults() {
+            const container = document.getElementById('tables-container');
+            const summaryDiv = document.getElementById('summary');
+            const summaryContent = document.getElementById('summary-content');
+            
+            if (Object.keys(checkResults).length === 0) {
+                container.innerHTML = '';
+                summaryDiv.style.display = 'none';
+                return;
+            }
+
+            // Afficher le résumé
+            let totalTables = Object.keys(checkResults).length;
+            let successfulTables = Object.values(checkResults).filter(r => r.status === 'pass').length;
+            let partialTables = Object.values(checkResults).filter(r => r.status === 'partial' || r.status === 'restricted').length;
+            let failedTables = Object.values(checkResults).filter(r => r.status === 'fail').length;
+
+            summaryContent.innerHTML = `
+                <div class="summary-item">
+                    <span>Tables vérifiées:</span>
+                    <span><strong>${totalTables}</strong></span>
+                </div>
+                <div class="summary-item">
+                    <span>✅ Complètes:</span>
+                    <span><strong>${successfulTables}</strong></span>
+                </div>
+                <div class="summary-item">
+                    <span>⚠️ Partielles/Restreintes:</span>
+                    <span><strong>${partialTables}</strong></span>
+                </div>
+                <div class="summary-item">
+                    <span>❌ Échecs:</span>
+                    <span><strong>${failedTables}</strong></span>
+                </div>
+            `;
+            summaryDiv.style.display = 'block';
+
+            // Afficher les détails des tables
+            let html = '';
+            Object.entries(checkResults).forEach(([tableKey, result]) => {
+                const tableInfo = expectedData[tableKey];
+                const statusClass = result.status === 'pass' ? 'status-pass' : 
+                                  result.status === 'fail' ? 'status-fail' : 'status-loading';
+                const statusText = result.status === 'pass' ? '✅ Complète' :
+                                 result.status === 'partial' ? '⚠️ Partielle' :
+                                 result.status === 'restricted' ? '🔒 Restreinte' :
+                                 '❌ Échec';
+
+                html += `
+                    <div class="table-section">
+                        <div class="table-header">
+                            <div class="table-title">${tableInfo.name}</div>
+                            <div class="status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="table-content">
+                            <div style="margin-bottom: 10px;">
+                                <strong>Attendu:</strong> ${tableInfo.expectedCount} enregistrements<br>
+                                <strong>Trouvé:</strong> ${result.count} enregistrements<br>
+                                <strong>Status:</strong> ${result.message}
+                            </div>
+                `;
+
+                if (result.records.length > 0) {
+                    html += '<div><strong>Enregistrements:</strong></div>';
+                    result.records.forEach(record => {
+                        html += `<div class="record">• ${record}</div>`;
+                    });
+                } else if (result.status !== 'restricted') {
+                    html += '<div class="record">Aucun enregistrement trouvé</div>';
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        async function checkAllData() {
+            log('🚀 Début de la vérification des données...');
+            checkResults = {};
+            displayResults();
+
+            for (const [tableKey, tableInfo] of Object.entries(expectedData)) {
+                // Mettre à jour l'affichage avec le status "loading"
+                checkResults[tableKey] = {
+                    status: 'loading',
+                    count: '...',
+                    records: [],
+                    message: 'Vérification en cours...'
+                };
+                displayResults();
+
+                // Effectuer la vérification
+                const result = await checkTable(tableKey, tableInfo);
+                checkResults[tableKey] = result;
+                displayResults();
+
+                // Petite pause pour l'UX
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            log('✅ Vérification terminée !');
+            
+            // Analyse finale
+            const totalExpected = Object.values(expectedData).reduce((sum, table) => sum + table.expectedCount, 0);
+            const totalFound = Object.values(checkResults).reduce((sum, result) => {
+                return sum + (typeof result.count === 'number' ? result.count : 0);
+            }, 0);
+
+            log(`📊 Résumé: ${totalFound}/${totalExpected} enregistrements trouvés`);
+            
+            if (totalFound === 0) {
+                log('⚠️ ATTENTION: Aucune donnée trouvée ! Les données mockées ne semblent pas avoir été uploadées.');
+            } else if (totalFound < totalExpected) {
+                log('⚠️ ATTENTION: Données incomplètes. Certaines données mockées sont manquantes.');
+            } else {
+                log('🎉 EXCELLENT: Toutes les données mockées semblent être présentes !');
+            }
+        }
+
+        function clearResults() {
+            checkResults = {};
+            displayResults();
+            document.getElementById('log').textContent = '';
+            document.getElementById('log').style.display = 'none';
+        }
+
+        // Auto-lancement après 2 secondes
+        setTimeout(() => {
+            log('🔍 Lancement automatique de la vérification...');
+            checkAllData();
+        }, 2000);
+    </script>
+</body>
+</html>

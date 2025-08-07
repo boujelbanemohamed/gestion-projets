@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Configuration des Alertes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .project-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 10px 0;
+            background: white;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            border-color: #fbbf24;
+            color: #92400e;
+        }
+        .alert-danger {
+            background-color: #fee2e2;
+            border-color: #f87171;
+            color: #dc2626;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 4px;
+        }
+        .btn:hover {
+            background: #f9fafb;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .config-panel {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .form-group {
+            margin: 12px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔔 Test Configuration des Alertes de Projet</h1>
+    
+    <div class="test-section">
+        <h2>Instructions de Test</h2>
+        <ol>
+            <li>Modifiez le seuil d'alerte ci-dessous</li>
+            <li>Observez comment les alertes changent pour chaque projet</li>
+            <li>Testez différents seuils (3, 7, 14, 30 jours)</li>
+            <li>Vérifiez que les messages et couleurs sont appropriés</li>
+        </ol>
+        
+        <div class="config-panel">
+            <h3>Configuration Globale des Alertes</h3>
+            <div class="form-group">
+                <label for="threshold">Seuil d'alerte (en jours):</label>
+                <input type="number" id="threshold" value="7" min="1" max="365">
+                <button class="btn btn-primary" onclick="updateAlerts()">Appliquer</button>
+            </div>
+            <p><small>Vous serez alerté lorsqu'un projet arrive à <span id="threshold-display">7</span> jour(s) de sa date de fin.</small></p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Projets de Test</h2>
+        <div id="projects-container"></div>
+    </div>
+
+    <script>
+        // Simulation des fonctions d'alerte
+        let currentThreshold = 7;
+
+        const AlertSeverity = {
+            INFO: 'info',
+            WARNING: 'warning',
+            DANGER: 'danger'
+        };
+
+        function isProjectApproachingDeadline(endDate, threshold = currentThreshold) {
+            if (!endDate) return false;
+            const today = new Date();
+            const daysUntilDeadline = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            return daysUntilDeadline >= 0 && daysUntilDeadline <= threshold;
+        }
+
+        function isProjectOverdue(endDate) {
+            if (!endDate) return false;
+            const today = new Date();
+            return endDate < today;
+        }
+
+        function getDaysUntilDeadline(endDate) {
+            if (!endDate) return null;
+            const today = new Date();
+            return Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        }
+
+        function getAlertMessage(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return '';
+            
+            if (daysUntilDeadline < 0) {
+                return `Projet en dépassement de délai depuis ${Math.abs(daysUntilDeadline)} jour${Math.abs(daysUntilDeadline) > 1 ? 's' : ''}`;
+            } else if (daysUntilDeadline === 0) {
+                return 'Ce projet arrive à échéance aujourd\'hui';
+            } else {
+                return `Ce projet arrive à échéance dans ${daysUntilDeadline} jour${daysUntilDeadline > 1 ? 's' : ''}`;
+            }
+        }
+
+        function getAlertSeverity(daysUntilDeadline) {
+            if (daysUntilDeadline === null) return AlertSeverity.INFO;
+            
+            if (daysUntilDeadline < 0) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 2) {
+                return AlertSeverity.DANGER;
+            } else if (daysUntilDeadline <= 5) {
+                return AlertSeverity.WARNING;
+            } else {
+                return AlertSeverity.INFO;
+            }
+        }
+
+        function getAlertColorClasses(severity) {
+            switch (severity) {
+                case AlertSeverity.DANGER:
+                    return 'alert-danger';
+                case AlertSeverity.WARNING:
+                    return 'alert-warning';
+                case AlertSeverity.INFO:
+                default:
+                    return 'alert-info';
+            }
+        }
+
+        function getStatusClass(severity) {
+            switch (severity) {
+                case AlertSeverity.DANGER:
+                    return 'status-danger';
+                case AlertSeverity.WARNING:
+                    return 'status-warning';
+                case AlertSeverity.INFO:
+                default:
+                    return 'status-success';
+            }
+        }
+
+        // Projets de test
+        const testProjects = [
+            {
+                id: '1',
+                nom: 'Projet Urgent',
+                date_fin: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Dans 2 jours
+                description: 'Projet avec échéance très proche'
+            },
+            {
+                id: '2',
+                nom: 'Projet en Retard',
+                date_fin: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // Il y a 3 jours
+                description: 'Projet qui a dépassé sa date limite'
+            },
+            {
+                id: '3',
+                nom: 'Projet Aujourd\'hui',
+                date_fin: new Date(), // Aujourd'hui
+                description: 'Projet qui arrive à échéance aujourd\'hui'
+            },
+            {
+                id: '4',
+                nom: 'Projet dans 5 jours',
+                date_fin: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // Dans 5 jours
+                description: 'Projet avec échéance modérée'
+            },
+            {
+                id: '5',
+                nom: 'Projet dans 10 jours',
+                date_fin: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // Dans 10 jours
+                description: 'Projet avec échéance éloignée'
+            },
+            {
+                id: '6',
+                nom: 'Projet dans 30 jours',
+                date_fin: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Dans 30 jours
+                description: 'Projet avec échéance très éloignée'
+            }
+        ];
+
+        function renderProjects() {
+            const container = document.getElementById('projects-container');
+            container.innerHTML = '';
+
+            testProjects.forEach(project => {
+                const daysUntilDeadline = getDaysUntilDeadline(project.date_fin);
+                const isApproaching = isProjectApproachingDeadline(project.date_fin);
+                const isOverdue = isProjectOverdue(project.date_fin);
+                const showAlert = isApproaching || isOverdue;
+                const alertMessage = getAlertMessage(daysUntilDeadline);
+                const alertSeverity = getAlertSeverity(daysUntilDeadline);
+                const alertColorClass = getAlertColorClasses(alertSeverity);
+                const statusClass = getStatusClass(alertSeverity);
+
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">${project.nom}</h3>
+                        <span class="status ${statusClass}">
+                            ${daysUntilDeadline !== null ? 
+                                (daysUntilDeadline < 0 ? `Retard: ${Math.abs(daysUntilDeadline)}j` : 
+                                 daysUntilDeadline === 0 ? 'Aujourd\'hui' : 
+                                 `Reste: ${daysUntilDeadline}j`) : 'Pas de date'
+                            }
+                        </span>
+                    </div>
+                    <p style="color: #6b7280; margin: 8px 0;">${project.description}</p>
+                    <p style="font-size: 14px; margin: 8px 0;">
+                        <strong>Date de fin:</strong> ${project.date_fin.toLocaleDateString('fr-FR')}
+                    </p>
+                    ${showAlert ? `
+                        <div class="alert ${alertColorClass}">
+                            <span>⚠️</span>
+                            <span>${alertMessage}</span>
+                            <button class="btn" onclick="configureAlert('${project.id}')">Configurer</button>
+                        </div>
+                    ` : `
+                        <div style="padding: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; color: #166534;">
+                            ✅ Aucune alerte - Projet dans les délais
+                            <button class="btn" onclick="configureAlert('${project.id}')">Configurer alertes</button>
+                        </div>
+                    `}
+                `;
+                container.appendChild(projectCard);
+            });
+        }
+
+        function updateAlerts() {
+            const thresholdInput = document.getElementById('threshold');
+            currentThreshold = parseInt(thresholdInput.value) || 7;
+            document.getElementById('threshold-display').textContent = currentThreshold;
+            renderProjects();
+        }
+
+        function configureAlert(projectId) {
+            alert(`Configuration des alertes pour le projet ${projectId}\n\nSeuil actuel: ${currentThreshold} jours\n\nDans l'application réelle, ceci ouvrirait le modal de configuration des alertes.`);
+        }
+
+        // Initialisation
+        window.onload = function() {
+            renderProjects();
+            
+            // Mise à jour automatique du seuil quand on change la valeur
+            document.getElementById('threshold').addEventListener('input', function() {
+                document.getElementById('threshold-display').textContent = this.value;
+            });
+        };
+    </script>
+</body>
+</html>
