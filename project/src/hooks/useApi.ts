@@ -3,19 +3,19 @@ import { supabaseApiService } from '../services/supabaseApi'
 import { mockDataService } from '../services/mockDataService'
 
 // Détermine quel service API utiliser
-const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
-const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true' || localStorage.getItem('useMockData') === 'true'
+const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true' || localStorage.getItem('useSupabase') === 'true'
+const useMockData = import.meta.env.VITE_USE_MOCK_DATA === 'true' && localStorage.getItem('useSupabase') !== 'true'
 
 export const useApi = () => {
-  // Priorité : Mock Data > Supabase > Backend local
-  if (useMockData) {
-    console.log('🎭 Utilisation des données mockées')
-    return mockDataService
+  // Priorité : Supabase (si activé) > Mock Data > Backend local
+  if (useSupabase && localStorage.getItem('useSupabase') === 'true') {
+    console.log('🗄️ Utilisation de Supabase (forcé)')
+    return supabaseApiService
   }
 
-  if (useSupabase) {
-    console.log('🗄️ Utilisation de Supabase')
-    return supabaseApiService
+  if (useMockData && localStorage.getItem('useMockData') !== 'false') {
+    console.log('🎭 Utilisation des données mockées')
+    return mockDataService
   }
 
   console.log('⚙️ Utilisation du backend local')
