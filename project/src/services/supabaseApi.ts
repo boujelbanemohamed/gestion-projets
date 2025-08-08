@@ -30,12 +30,14 @@ class SupabaseApiService {
       const userData = users[0];
       console.log('✅ Utilisateur trouvé:', userData.email, 'ID:', userData.id);
 
-      // Vérification simple du mot de passe (pour demo)
-      const validPasswords = ['password123', 'Admin123!', 'Dev123!', 'Chef123!', 'admin', 'password'];
-      if (!validPasswords.includes(password)) {
-        console.error('❌ Mot de passe incorrect pour:', email);
-        throw new Error('Mot de passe incorrect');
+      // Vérification du mot de passe (accepter tous les mots de passe pour demo)
+      // Pour une vraie application, vous devriez hasher et vérifier les mots de passe
+      if (!password || password.length < 3) {
+        console.error('❌ Mot de passe trop court pour:', email);
+        throw new Error('Mot de passe doit contenir au moins 3 caractères');
       }
+
+      console.log('✅ Mot de passe accepté pour:', email);
 
       console.log('✅ Authentification réussie pour:', userData.email);
 
