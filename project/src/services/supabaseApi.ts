@@ -413,6 +413,32 @@ class SupabaseApiService {
     return data || []
   }
 
+  async updateNotification(id: string, notificationData: {
+    titre?: string;
+    message?: string;
+    type?: string;
+    lu?: boolean;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('notifications')
+      .update(notificationData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  }
+
   async markNotificationAsRead(id: number): Promise<void> {
     const { error } = await supabase
       .from('notifications')
@@ -565,6 +591,151 @@ class SupabaseApiService {
     if (error) throw new Error(error.message);
   }
 
+  // CRUD TASKS (Tâches)
+  async getTasks(projectId?: string): Promise<{ tasks: any[] }> {
+    let query = supabase
+      .from('tasks')
+      .select(`
+        *,
+        assigned_user:users!tasks_assigned_to_fkey(id, nom, prenom, email),
+        created_by_user:users!tasks_created_by_fkey(id, nom, prenom, email),
+        project:projects!tasks_project_id_fkey(id, nom)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (projectId) {
+      query = query.eq('project_id', projectId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(error.message);
+    return { tasks: data || [] };
+  }
+
+  async createTask(taskData: {
+    titre: string;
+    description?: string;
+    statut?: string;
+    priorite?: string;
+    date_debut?: string;
+    date_fin?: string;
+    project_id: string;
+    assigned_to?: string;
+    created_by?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        titre: taskData.titre,
+        description: taskData.description,
+        statut: taskData.statut || 'todo',
+        priorite: taskData.priorite || 'medium',
+        date_debut: taskData.date_debut,
+        date_fin: taskData.date_fin,
+        project_id: taskData.project_id,
+        assigned_to: taskData.assigned_to,
+        created_by: taskData.created_by,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async updateTask(id: string, taskData: {
+    titre?: string;
+    description?: string;
+    statut?: string;
+    priorite?: string;
+    date_debut?: string;
+    date_fin?: string;
+    assigned_to?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(taskData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  }
+
+  // CRUD COMMENTS (Commentaires)
+  async getComments(taskId?: string): Promise<{ comments: any[] }> {
+    let query = supabase
+      .from('comments')
+      .select(`
+        *,
+        created_by_user:users!comments_created_by_fkey(id, nom, prenom, email),
+        task:tasks!comments_task_id_fkey(id, titre)
+      `)
+      .order('created_at', { ascending: true });
+
+    if (taskId) {
+      query = query.eq('task_id', taskId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(error.message);
+    return { comments: data || [] };
+  }
+
+  async createComment(commentData: {
+    contenu: string;
+    task_id: string;
+    created_by?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({
+        contenu: commentData.contenu,
+        task_id: commentData.task_id,
+        created_by: commentData.created_by,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async updateComment(id: string, commentData: {
+    contenu?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('comments')
+      .update(commentData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async deleteComment(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  }
+
   // CRUD Départements
   async getDepartments(): Promise<{ departments: any[] }> {
     const { data, error } = await supabase
@@ -588,6 +759,30 @@ class SupabaseApiService {
 
     if (error) throw new Error(error.message);
     return data;
+  }
+
+  async updateDepartment(id: string, departmentData: {
+    nom?: string;
+    description?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('departments')
+      .update(departmentData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async deleteDepartment(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('departments')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
   }
 
   // Subscriptions temps réel
