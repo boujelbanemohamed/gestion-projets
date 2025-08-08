@@ -83,6 +83,39 @@ function App() {
     }
   };
 
+  // Charger les projets depuis l'API
+  const loadProjects = async () => {
+    try {
+      console.log('🚀 Chargement projets depuis API...');
+      const response = await api.getProjects();
+
+      // Convertir les projets Supabase au format attendu par l'app
+      const convertedProjects = response.projects.map((project: any) => ({
+        id: project.id,
+        nom: project.nom,
+        description: project.description || '',
+        statut: project.statut || 'planification',
+        date_debut: project.date_debut ? new Date(project.date_debut) : undefined,
+        date_fin: project.date_fin ? new Date(project.date_fin) : undefined,
+        budget_initial: project.budget,
+        devise: project.devise || 'EUR',
+        avancement: project.avancement || 0,
+        responsable_id: project.created_by,
+        departement: project.departement,
+        created_at: new Date(project.created_at),
+        updated_at: new Date(project.updated_at),
+        taches: []
+      }));
+
+      console.log('✅ Projets chargés:', convertedProjects.length);
+      setProjects(convertedProjects);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des projets:', error);
+      // En cas d'erreur, garder les données mockées
+      setProjects(mockProjects);
+    }
+  };
+
   // Check for existing authentication on app load
   useEffect(() => {
     // Pour Supabase, on vérifiera la session automatiquement
@@ -90,11 +123,12 @@ function App() {
     setIsLoginModalOpen(true);
   }, []);
 
-  // Charger les utilisateurs et départements quand un utilisateur se connecte
+  // Charger les utilisateurs, départements et projets quand un utilisateur se connecte
   useEffect(() => {
     if (currentUser) {
       loadUsers();
       loadDepartments();
+      loadProjects();
     }
   }, [currentUser]);
 
@@ -135,7 +169,7 @@ function App() {
     ));
   };
 
-  const handleCreateProject = (projectData: {
+  const handleCreateProject = async (projectData: {
     nom: string;
     description?: string;
     responsable_id?: string;
@@ -154,51 +188,103 @@ function App() {
       return;
     }
 
-    const newProject: Project = {
-      id: Date.now().toString(),
-      nom: projectData.nom,
-      type_projet: projectData.type_projet,
-      budget_initial: projectData.budget_initial,
-      devise: projectData.devise,
-      description: projectData.description,
-      responsable_id: projectData.responsable_id,
-      prestataire_externe: projectData.prestataire_externe,
-      nouvelles_fonctionnalites: projectData.nouvelles_fonctionnalites,
-      avantages: projectData.avantages,
-      departement: projectData.departement,
-      date_debut: projectData.dateDebut,
-      date_fin: projectData.dateFin,
-      created_at: new Date(),
-      updated_at: new Date(),
-      taches: [],
-      attachments: projectData.attachments ? projectData.attachments.map(file => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        nom: file.name,
-        taille: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file),
-        uploaded_at: new Date(),
-        uploaded_by: currentUser!
-      })) : undefined
-    };
-    setProjects(prev => [...prev, newProject]);
+    try {
+      console.log('🚀 Création projet via API:', projectData);
+
+      // Appeler l'API pour créer le projet
+      const createdProject = await api.createProject({
+        nom: projectData.nom,
+        description: projectData.description,
+        statut: 'planification',
+        date_debut: projectData.dateDebut?.toISOString().split('T')[0],
+        date_fin: projectData.dateFin?.toISOString().split('T')[0],
+        budget: projectData.budget_initial,
+        devise: projectData.devise || 'EUR',
+        avancement: 0
+      });
+
+      console.log('✅ Projet créé avec succès:', createdProject);
+
+      // Ajouter le projet créé à la liste locale
+      const newProject: Project = {
+        id: createdProject.id || createdProject.project?.id,
+        nom: createdProject.nom || createdProject.project?.nom,
+        description: createdProject.description || createdProject.project?.description,
+        statut: 'planification',
+        date_debut: projectData.dateDebut,
+        date_fin: projectData.dateFin,
+        budget_initial: projectData.budget_initial,
+        devise: projectData.devise || 'EUR',
+        responsable_id: projectData.responsable_id,
+        prestataire_externe: projectData.prestataire_externe,
+        nouvelles_fonctionnalites: projectData.nouvelles_fonctionnalites,
+        avantages: projectData.avantages,
+        departement: projectData.departement,
+        created_at: new Date(),
+        updated_at: new Date(),
+        taches: [],
+        attachments: projectData.attachments ? projectData.attachments.map(file => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          nom: file.name,
+          taille: file.size,
+          type: file.type,
+          url: URL.createObjectURL(file),
+          uploaded_at: new Date(),
+          uploaded_by: currentUser!
+        })) : undefined
+      };
+
+      setProjects(prev => [...prev, newProject]);
+
+      // Notification de succès
+      alert('Projet créé avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur création projet:', error);
+      alert(`Erreur lors de la création : ${error.message}`);
+    }
   };
 
-  const handleUpdateProject = (updatedProject: Project) => {
+  const handleUpdateProject = async (updatedProject: Project) => {
     if (!PermissionService.hasPermission(currentUser, 'projects', 'edit')) {
       alert('Vous n\'avez pas les permissions pour modifier ce projet');
       return;
     }
 
-    setProjects(prev => 
-      prev.map(project => 
-        project.id === updatedProject.id ? updatedProject : project
-      )
-    );
-    setSelectedProject(updatedProject);
+    try {
+      console.log('🔄 Modification projet via API:', updatedProject.id);
+
+      // Appeler l'API pour modifier le projet
+      await api.updateProject(updatedProject.id, {
+        nom: updatedProject.nom,
+        description: updatedProject.description,
+        statut: updatedProject.statut,
+        date_debut: updatedProject.date_debut?.toISOString().split('T')[0],
+        date_fin: updatedProject.date_fin?.toISOString().split('T')[0],
+        budget: updatedProject.budget_initial,
+        devise: updatedProject.devise,
+        avancement: updatedProject.avancement
+      });
+
+      console.log('✅ Projet modifié avec succès');
+
+      // Mettre à jour la liste locale
+      setProjects(prev =>
+        prev.map(project =>
+          project.id === updatedProject.id ? updatedProject : project
+        )
+      );
+      setSelectedProject(updatedProject);
+
+      alert('Projet modifié avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur modification projet:', error);
+      alert(`Erreur lors de la modification : ${error.message}`);
+    }
   };
 
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
     if (!PermissionService.hasPermission(currentUser, 'projects', 'delete')) {
       alert('Vous n\'avez pas les permissions pour supprimer ce projet');
       return;
@@ -207,13 +293,13 @@ function App() {
     const projectToDelete = projects.find(p => p.id === projectId);
     if (!projectToDelete) return;
 
-    const taskCount = projectToDelete.taches.length;
-    const memberCount = new Set(projectToDelete.taches.flatMap(t => t.utilisateurs.map(u => u.id))).size;
-    const attachmentCount = (projectToDelete.attachments?.length || 0) + 
-                           projectToDelete.taches.reduce((sum, task) => sum + (task.attachments?.length || 0), 0);
+    const taskCount = projectToDelete.taches?.length || 0;
+    const memberCount = projectToDelete.taches ? new Set(projectToDelete.taches.flatMap(t => t.utilisateurs?.map(u => u.id) || [])).size : 0;
+    const attachmentCount = (projectToDelete.attachments?.length || 0) +
+                           (projectToDelete.taches?.reduce((sum, task) => sum + (task.attachments?.length || 0), 0) || 0);
 
     let confirmMessage = `Êtes-vous sûr de vouloir supprimer le projet "${projectToDelete.nom}" ?`;
-    
+
     if (taskCount > 0 || memberCount > 0 || attachmentCount > 0) {
       confirmMessage += '\n\nCette action supprimera également :';
       if (taskCount > 0) {
@@ -229,11 +315,27 @@ function App() {
     }
 
     if (window.confirm(confirmMessage)) {
-      setProjects(prev => prev.filter(project => project.id !== projectId));
-      
-      if (selectedProject && selectedProject.id === projectId) {
-        setSelectedProject(null);
-        setCurrentView('dashboard');
+      try {
+        console.log('🗑️ Suppression projet via API:', projectId);
+
+        // Appeler l'API pour supprimer le projet
+        await api.deleteProject(projectId);
+
+        console.log('✅ Projet supprimé avec succès');
+
+        // Supprimer de la liste locale
+        setProjects(prev => prev.filter(project => project.id !== projectId));
+
+        if (selectedProject && selectedProject.id === projectId) {
+          setSelectedProject(null);
+          setCurrentView('dashboard');
+        }
+
+        alert('Projet supprimé avec succès !');
+
+      } catch (error: any) {
+        console.error('❌ Erreur suppression projet:', error);
+        alert(`Erreur lors de la suppression : ${error.message}`);
       }
     }
   };
