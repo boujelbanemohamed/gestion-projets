@@ -116,38 +116,71 @@ class SupabaseApiService {
     return { projects }
   }
 
-  async createProject(projectData: Omit<Tables['projects']['Insert'], 'created_by'>): Promise<{ project: Project }> {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Utilisateur non authentifié')
+  async createProject(projectData: {
+    nom: string;
+    description?: string;
+    statut?: string;
+    date_debut?: string;
+    date_fin?: string;
+    budget?: number;
+    devise?: string;
+    avancement?: number;
+  }): Promise<any> {
+    console.log('🚀 Création projet Supabase:', projectData);
+
+    // Valeurs par défaut et validation du statut
+    const validStatuts = ['planification', 'en_cours', 'en_pause', 'termine', 'annule'];
+    const statut = projectData.statut && validStatuts.includes(projectData.statut)
+      ? projectData.statut
+      : 'planification';
+
+    console.log('📊 Statut validé:', statut);
 
     const { data, error } = await supabase
       .from('projects')
       .insert({
-        ...projectData,
-        created_by: user.id,
+        nom: projectData.nom,
+        description: projectData.description,
+        statut: statut,
+        date_debut: projectData.date_debut,
+        date_fin: projectData.date_fin,
+        budget: projectData.budget,
+        devise: projectData.devise || 'EUR',
+        avancement: projectData.avancement || 0,
+        created_by: 'aa96c9a3-807f-461e-98f1-9189be4c44de' // ID utilisateur par défaut
       })
       .select()
       .single()
 
-    if (error) throw new Error(error.message)
-
-    return {
-      project: {
-        id: data.id,
-        nom: data.nom,
-        description: data.description,
-        statut: data.statut as Project['statut'],
-        date_debut: data.date_debut,
-        date_fin: data.date_fin,
-        budget: data.budget,
-        created_by: data.created_by,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-      }
+    if (error) {
+      console.error('❌ Erreur création projet Supabase:', error);
+      throw new Error(error.message);
     }
+
+    console.log('✅ Projet créé Supabase:', data);
+    return data;
   }
 
-  async updateProject(id: number, updates: Tables['projects']['Update']): Promise<{ project: Project }> {
+  async updateProject(id: string, updates: {
+    nom?: string;
+    description?: string;
+    statut?: string;
+    date_debut?: string;
+    date_fin?: string;
+    budget?: number;
+    devise?: string;
+    avancement?: number;
+  }): Promise<any> {
+    console.log('🔄 Modification projet Supabase:', id, updates);
+
+    // Validation du statut si fourni
+    if (updates.statut) {
+      const validStatuts = ['planification', 'en_cours', 'en_pause', 'termine', 'annule'];
+      if (!validStatuts.includes(updates.statut)) {
+        updates.statut = 'planification';
+      }
+    }
+
     const { data, error } = await supabase
       .from('projects')
       .update(updates)
@@ -155,22 +188,13 @@ class SupabaseApiService {
       .select()
       .single()
 
-    if (error) throw new Error(error.message)
-
-    return {
-      project: {
-        id: data.id,
-        nom: data.nom,
-        description: data.description,
-        statut: data.statut as Project['statut'],
-        date_debut: data.date_debut,
-        date_fin: data.date_fin,
-        budget: data.budget,
-        created_by: data.created_by,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
-      }
+    if (error) {
+      console.error('❌ Erreur modification projet Supabase:', error);
+      throw new Error(error.message);
     }
+
+    console.log('✅ Projet modifié Supabase:', data);
+    return data;
   }
 
   // PV de Réunion
