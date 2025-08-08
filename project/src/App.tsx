@@ -60,6 +60,29 @@ function App() {
     }
   };
 
+  // Charger les départements depuis l'API
+  const loadDepartments = async () => {
+    try {
+      console.log('🏢 Chargement départements depuis API...');
+      const response = await api.getDepartments();
+
+      // Convertir les départements Supabase au format attendu par l'app
+      const convertedDepartments = response.departments.map((dept: any) => ({
+        id: dept.id,
+        nom: dept.nom,
+        description: dept.description || '',
+        created_at: new Date(dept.created_at)
+      }));
+
+      console.log('✅ Départements chargés:', convertedDepartments.length);
+      setDepartments(convertedDepartments);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des départements:', error);
+      // En cas d'erreur, garder les données mockées
+      setDepartments(mockDepartments);
+    }
+  };
+
   // Check for existing authentication on app load
   useEffect(() => {
     // Pour Supabase, on vérifiera la session automatiquement
@@ -67,10 +90,11 @@ function App() {
     setIsLoginModalOpen(true);
   }, []);
 
-  // Charger les utilisateurs quand un utilisateur se connecte
+  // Charger les utilisateurs et départements quand un utilisateur se connecte
   useEffect(() => {
     if (currentUser) {
       loadUsers();
+      loadDepartments();
     }
   }, [currentUser]);
 
@@ -426,21 +450,43 @@ function App() {
     }
   };
 
-  const handleCreateDepartment = (departmentData: Omit<Department, 'id' | 'created_at'>) => {
+  const handleCreateDepartment = async (departmentData: Omit<Department, 'id' | 'created_at'>) => {
     if (!PermissionService.hasPermission(currentUser, 'departments', 'create')) {
       alert('Vous n\'avez pas les permissions pour créer un département');
       return;
     }
 
-    const newDepartment: Department = {
-      ...departmentData,
-      id: Date.now().toString(),
-      created_at: new Date()
-    };
-    setDepartments(prev => [...prev, newDepartment]);
+    try {
+      console.log('🏢 Création département via API:', departmentData);
+
+      // Appeler l'API pour créer le département
+      const createdDepartment = await api.createDepartment({
+        nom: departmentData.nom,
+        description: departmentData.description
+      });
+
+      console.log('✅ Département créé avec succès:', createdDepartment);
+
+      // Ajouter le département créé à la liste locale
+      const newDepartment: Department = {
+        id: createdDepartment.id,
+        nom: createdDepartment.nom,
+        description: createdDepartment.description,
+        created_at: new Date(createdDepartment.created_at)
+      };
+
+      setDepartments(prev => [...prev, newDepartment]);
+
+      // Notification de succès
+      alert('Département créé avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur création département:', error);
+      alert(`Erreur lors de la création : ${error.message}`);
+    }
   };
 
-  const handleUpdateDepartment = (id: string, departmentData: Omit<Department, 'id' | 'created_at'>) => {
+  const handleUpdateDepartment = async (id: string, departmentData: Omit<Department, 'id' | 'created_at'>) => {
     if (!PermissionService.hasPermission(currentUser, 'departments', 'edit')) {
       alert('Vous n\'avez pas les permissions pour modifier ce département');
       return;
@@ -449,32 +495,52 @@ function App() {
     const oldDepartment = departments.find(d => d.id === id);
     if (!oldDepartment) return;
 
-    setDepartments(prev => 
-      prev.map(dept => 
-        dept.id === id ? { ...departmentData, id, created_at: dept.created_at } : dept
-      )
-    );
+    try {
+      console.log('🔄 Modification département via API:', id, departmentData);
 
-    if (oldDepartment.nom !== departmentData.nom) {
-      setUsers(prev => 
-        prev.map(user => 
-          user.departement === oldDepartment.nom 
-            ? { ...user, departement: departmentData.nom }
-            : user
+      // Appeler l'API pour modifier le département
+      const updatedDepartment = await api.updateDepartment(id, {
+        nom: departmentData.nom,
+        description: departmentData.description
+      });
+
+      console.log('✅ Département modifié avec succès:', updatedDepartment);
+
+      // Mettre à jour la liste locale
+      setDepartments(prev =>
+        prev.map(dept =>
+          dept.id === id ? { ...departmentData, id, created_at: dept.created_at } : dept
         )
       );
 
-      setProjects(prev => 
-        prev.map(project => 
-          project.departement === oldDepartment.nom 
-            ? { ...project, departement: departmentData.nom, updated_at: new Date() }
-            : project
-        )
-      );
+      // Mettre à jour les utilisateurs si le nom du département a changé
+      if (oldDepartment.nom !== departmentData.nom) {
+        setUsers(prev =>
+          prev.map(user =>
+            user.departement === oldDepartment.nom
+              ? { ...user, departement: departmentData.nom }
+              : user
+          )
+        );
+
+        setProjects(prev =>
+          prev.map(project =>
+            project.departement === oldDepartment.nom
+              ? { ...project, departement: departmentData.nom, updated_at: new Date() }
+              : project
+          )
+        );
+      }
+
+      alert('Département modifié avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur modification département:', error);
+      alert(`Erreur lors de la modification : ${error.message}`);
     }
   };
 
-  const handleDeleteDepartment = (id: string) => {
+  const handleDeleteDepartment = async (id: string) => {
     if (!PermissionService.hasPermission(currentUser, 'departments', 'delete')) {
       alert('Vous n\'avez pas les permissions pour supprimer ce département');
       return;
@@ -484,31 +550,48 @@ function App() {
     if (!departmentToDelete) return;
 
     const memberCount = users.filter(u => u.departement === departmentToDelete.nom).length;
-    
+
     let confirmMessage = `Êtes-vous sûr de vouloir supprimer le département "${departmentToDelete.nom}" ?`;
-    
+
     if (memberCount > 0) {
       confirmMessage += `\n\nCe département contient ${memberCount} membre${memberCount > 1 ? 's' : ''}. Les membres devront être réassignés.`;
     }
-    
+
     if (window.confirm(confirmMessage)) {
-      setDepartments(prev => prev.filter(dept => dept.id !== id));
+      try {
+        console.log('🗑️ Suppression département via API:', id);
 
-      setUsers(prev => 
-        prev.map(user => 
-          user.departement === departmentToDelete.nom 
-            ? { ...user, departement: 'Non assigné' }
-            : user
-        )
-      );
+        // Appeler l'API pour supprimer le département
+        await api.deleteDepartment(id);
 
-      setProjects(prev => 
-        prev.map(project => 
-          project.departement === departmentToDelete.nom 
-            ? { ...project, departement: undefined, updated_at: new Date() }
-            : project
-        )
-      );
+        console.log('✅ Département supprimé avec succès');
+
+        // Supprimer de la liste locale
+        setDepartments(prev => prev.filter(dept => dept.id !== id));
+
+        // Réassigner les utilisateurs
+        setUsers(prev =>
+          prev.map(user =>
+            user.departement === departmentToDelete.nom
+              ? { ...user, departement: 'Non assigné' }
+              : user
+          )
+        );
+
+        setProjects(prev =>
+          prev.map(project =>
+            project.departement === departmentToDelete.nom
+              ? { ...project, departement: undefined, updated_at: new Date() }
+              : project
+          )
+        );
+
+        alert('Département supprimé avec succès !');
+
+      } catch (error: any) {
+        console.error('❌ Erreur suppression département:', error);
+        alert(`Erreur lors de la suppression : ${error.message}`);
+      }
     }
   };
 
