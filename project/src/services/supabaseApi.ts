@@ -471,6 +471,102 @@ class SupabaseApiService {
     };
   }
 
+  // CRUD Utilisateurs
+  async createUser(userData: {
+    email: string;
+    nom: string;
+    prenom: string;
+    role?: string;
+    fonction?: string;
+    departement_id?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        email: userData.email,
+        nom: userData.nom,
+        prenom: userData.prenom,
+        role: userData.role || 'UTILISATEUR',
+        fonction: userData.fonction,
+        department_id: userData.departement_id,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async updateUser(id: string, userData: {
+    email?: string;
+    nom?: string;
+    prenom?: string;
+    role?: string;
+    fonction?: string;
+    departement_id?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        email: userData.email,
+        nom: userData.nom,
+        prenom: userData.prenom,
+        role: userData.role,
+        fonction: userData.fonction,
+        department_id: userData.departement_id,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  }
+
+  // CRUD Projets - Méthodes supplémentaires
+  async deleteProject(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  }
+
+  // CRUD Départements
+  async getDepartments(): Promise<{ departments: any[] }> {
+    const { data, error } = await supabase
+      .from('departments')
+      .select('*')
+      .order('nom');
+
+    if (error) throw new Error(error.message);
+    return { departments: data || [] };
+  }
+
+  async createDepartment(departmentData: {
+    nom: string;
+    description?: string;
+  }): Promise<any> {
+    const { data, error } = await supabase
+      .from('departments')
+      .insert(departmentData)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   // Subscriptions temps réel
   subscribeToNotifications(userId: string, callback: (notification: any) => void) {
     return supabase
