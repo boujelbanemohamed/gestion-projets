@@ -228,6 +228,17 @@ function App() {
     try {
       console.log('🚀 Création utilisateur via API:', memberData);
 
+      // Mapper le nom du département vers son UUID
+      const departmentMapping: { [key: string]: string } = {
+        'IT': '62c446b9-f4c2-4448-a21a-3f9bb5e3eb35',
+        'RH': '73d557ca-a5d3-5559-b32b-4a0cc6f4fc46',
+        'Finance': '84e668db-b6e4-666a-c43c-5b1dd7a5ad57'
+      };
+
+      const departmentId = memberData.departement ? departmentMapping[memberData.departement] : null;
+
+      console.log('🔄 Mapping département:', memberData.departement, '→', departmentId);
+
       // Appeler l'API pour créer l'utilisateur
       const createdUser = await api.createUser({
         nom: memberData.nom,
@@ -235,7 +246,7 @@ function App() {
         email: memberData.email,
         fonction: memberData.fonction,
         role: memberData.role,
-        departement_id: memberData.departement
+        departement_id: departmentId
       });
 
       console.log('✅ Utilisateur créé avec succès:', createdUser);
@@ -263,7 +274,7 @@ function App() {
     }
   };
 
-  const handleUpdateMember = (id: string, memberData: Omit<User, 'id' | 'created_at'>) => {
+  const handleUpdateMember = async (id: string, memberData: Omit<User, 'id' | 'created_at'>) => {
     if (!PermissionService.hasPermission(currentUser, 'members', 'edit')) {
       alert('Vous n\'avez pas les permissions pour modifier ce membre');
       return;
@@ -275,21 +286,53 @@ function App() {
       return;
     }
 
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === id ? { ...memberData, id, created_at: user.created_at } : user
-      )
-    );
+    try {
+      console.log('🔄 Modification utilisateur via API:', id, memberData);
 
-    // Update current user if they modified their own profile
-    if (currentUser && currentUser.id === id) {
-      const updatedCurrentUser = { ...currentUser, ...memberData };
-      setCurrentUser(updatedCurrentUser);
-      AuthService.updateProfile(updatedCurrentUser);
+      // Mapper le nom du département vers son UUID
+      const departmentMapping: { [key: string]: string } = {
+        'IT': '62c446b9-f4c2-4448-a21a-3f9bb5e3eb35',
+        'RH': '73d557ca-a5d3-5559-b32b-4a0cc6f4fc46',
+        'Finance': '84e668db-b6e4-666a-c43c-5b1dd7a5ad57'
+      };
+
+      const departmentId = memberData.departement ? departmentMapping[memberData.departement] : null;
+
+      // Appeler l'API pour modifier l'utilisateur
+      const updatedUser = await api.updateUser(id, {
+        nom: memberData.nom,
+        prenom: memberData.prenom,
+        email: memberData.email,
+        fonction: memberData.fonction,
+        role: memberData.role,
+        departement_id: departmentId
+      });
+
+      console.log('✅ Utilisateur modifié avec succès:', updatedUser);
+
+      // Mettre à jour la liste locale
+      setUsers(prev =>
+        prev.map(user =>
+          user.id === id ? { ...memberData, id, created_at: user.created_at } : user
+        )
+      );
+
+      // Update current user if they modified their own profile
+      if (currentUser && currentUser.id === id) {
+        const updatedCurrentUser = { ...currentUser, ...memberData };
+        setCurrentUser(updatedCurrentUser);
+        AuthService.updateProfile(updatedCurrentUser);
+      }
+
+      alert('Utilisateur modifié avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur modification utilisateur:', error);
+      alert(`Erreur lors de la modification : ${error.message}`);
     }
   };
 
-  const handleDeleteMember = (id: string) => {
+  const handleDeleteMember = async (id: string) => {
     if (!PermissionService.hasPermission(currentUser, 'members', 'delete')) {
       alert('Vous n\'avez pas les permissions pour supprimer ce membre');
       return;
@@ -301,7 +344,24 @@ function App() {
       return;
     }
 
-    setUsers(prev => prev.filter(user => user.id !== id));
+    try {
+      console.log('🗑️ Suppression utilisateur via API:', id);
+
+      // Appeler l'API pour supprimer l'utilisateur
+      await api.deleteUser(id);
+
+      console.log('✅ Utilisateur supprimé avec succès');
+
+      // Supprimer de la liste locale
+      setUsers(prev => prev.filter(user => user.id !== id));
+
+      alert('Utilisateur supprimé avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur suppression utilisateur:', error);
+      alert(`Erreur lors de la suppression : ${error.message}`);
+      return;
+    }
     
     // Remove member from all tasks
     setProjects(prev => 
