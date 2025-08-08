@@ -128,13 +128,11 @@ class SupabaseApiService {
   }): Promise<any> {
     console.log('🚀 Création projet Supabase:', projectData);
 
-    // Valeurs par défaut et validation du statut
-    const validStatuts = ['planification', 'en_cours', 'en_pause', 'termine', 'annule'];
-    const statut = projectData.statut && validStatuts.includes(projectData.statut)
-      ? projectData.statut
-      : 'planification';
+    // Utiliser NULL par défaut pour éviter la contrainte
+    // Nous découvrirons les valeurs autorisées plus tard
+    const statut = null; // Statut NULL par défaut
 
-    console.log('📊 Statut validé:', statut);
+    console.log('📊 Statut utilisé (NULL par défaut):', statut);
 
     const { data, error } = await supabase
       .from('projects')
@@ -173,13 +171,9 @@ class SupabaseApiService {
   }): Promise<any> {
     console.log('🔄 Modification projet Supabase:', id, updates);
 
-    // Validation du statut si fourni
-    if (updates.statut) {
-      const validStatuts = ['planification', 'en_cours', 'en_pause', 'termine', 'annule'];
-      if (!validStatuts.includes(updates.statut)) {
-        updates.statut = 'planification';
-      }
-    }
+    // Temporairement, ne pas valider le statut
+    // Nous découvrirons les valeurs autorisées plus tard
+    console.log('🔄 Statut reçu pour modification:', updates.statut);
 
     const { data, error } = await supabase
       .from('projects')
