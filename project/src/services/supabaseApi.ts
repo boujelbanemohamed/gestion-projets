@@ -669,6 +669,7 @@ class SupabaseApiService {
     priorite?: string;
     date_debut?: string;
     date_fin?: string;
+    project_id?: string;
     assigned_to?: string;
   }): Promise<any> {
     const { data, error } = await supabase

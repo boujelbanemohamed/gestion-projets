@@ -20,6 +20,7 @@ import ProjectBudgetModal from './ProjectBudgetModal';
 import ProjectMembersManagementModal from './ProjectMembersManagementModal';
 import ProjectInfoModal from './ProjectInfoModal';
 import ProjectMeetingMinutes from './ProjectMeetingMinutes';
+import { useApi } from '../hooks/useApi';
 
 
 interface ProjectDetailProps {
@@ -64,6 +65,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     alertSeverity: 'info' as any,
     alertColorClasses: ''
   });
+
+  // Hook API
+  const api = useApi();
 
   // Memoized calculations for performance
   const hasBudget = useMemo(() =>
@@ -176,54 +180,144 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     };
   };
 
-  const handleCreateTask = (taskData: Omit<Task, 'id'>) => {
-    const currentUser = getCurrentUser();
-    const newTask: Task = {
-      ...taskData,
-      id: Date.now().toString(),
-      commentaires: [],
-      history: []
-    };
+  // Charger les tâches depuis l'API
+  const loadTasks = async () => {
+    try {
+      console.log('📝 Chargement tâches depuis API pour projet:', project.id);
+      const response = await api.getTasks(project.id);
 
-    newTask.history = [];
+      // Convertir les tâches Supabase au format attendu par l'app
+      const convertedTasks = response.tasks.map((task: any) => ({
+        id: task.id,
+        nom: task.titre,
+        description: task.description || '',
+        etat: task.statut || 'todo',
+        priorite: task.priorite || 'medium',
+        date_debut: task.date_debut ? new Date(task.date_debut) : undefined,
+        date_fin: task.date_fin ? new Date(task.date_fin) : undefined,
+        utilisateurs: task.assigned_user ? [task.assigned_user] : [],
+        commentaires: [],
+        history: [],
+        attachments: []
+      }));
 
-    const updatedProject = {
-      ...project,
-      taches: [...project.taches, newTask],
-      updated_at: new Date()
-    };
+      console.log('✅ Tâches chargées:', convertedTasks.length);
 
-    onUpdateProject(updatedProject);
+      // Mettre à jour le projet avec les tâches chargées
+      const updatedProject = {
+        ...project,
+        taches: convertedTasks
+      };
+
+      onUpdateProject(updatedProject);
+
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des tâches:', error);
+      // En cas d'erreur, garder les tâches existantes
+    }
   };
 
-  const handleUpdateTask = (taskData: Omit<Task, 'id'>) => {
+  // Charger les tâches au montage du composant
+  useEffect(() => {
+    loadTasks();
+  }, [project.id]);
+
+  const handleCreateTask = async (taskData: Omit<Task, 'id'>) => {
+    try {
+      console.log('📝 Création tâche via API:', taskData);
+
+      // Appeler l'API pour créer la tâche
+      const createdTask = await api.createTask({
+        titre: taskData.nom,
+        description: taskData.description,
+        statut: taskData.etat || 'todo',
+        priorite: taskData.priorite || 'medium',
+        date_debut: taskData.date_debut?.toISOString().split('T')[0],
+        date_fin: taskData.date_fin?.toISOString().split('T')[0],
+        project_id: project.id,
+        assigned_to: taskData.utilisateurs?.[0]?.id,
+        created_by: currentUser?.id
+      });
+
+      console.log('✅ Tâche créée avec succès:', createdTask);
+
+      // Créer la tâche locale pour l'interface
+      const newTask: Task = {
+        id: createdTask.id,
+        nom: createdTask.titre,
+        description: createdTask.description,
+        etat: createdTask.statut,
+        priorite: createdTask.priorite,
+        date_debut: createdTask.date_debut ? new Date(createdTask.date_debut) : taskData.date_debut,
+        date_fin: createdTask.date_fin ? new Date(createdTask.date_fin) : taskData.date_fin,
+        utilisateurs: taskData.utilisateurs || [],
+        commentaires: [],
+        history: [],
+        attachments: taskData.attachments
+      };
+
+      const updatedProject = {
+        ...project,
+        taches: [...project.taches, newTask],
+        updated_at: new Date()
+      };
+
+      onUpdateProject(updatedProject);
+      alert('Tâche créée avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur création tâche:', error);
+      alert(`Erreur lors de la création : ${error.message}`);
+    }
+  };
+
+  const handleUpdateTask = async (taskData: Omit<Task, 'id'>) => {
     if (!editingTask) return;
 
-    const currentUser = getCurrentUser();
-    const oldTask = editingTask;
-    const newHistory = [...(oldTask.history || [])];
+    try {
+      console.log('🔄 Modification tâche via API:', editingTask.id, taskData);
 
+      // Appeler l'API pour modifier la tâche
+      await api.updateTask(editingTask.id, {
+        titre: taskData.nom,
+        description: taskData.description,
+        statut: taskData.etat,
+        priorite: taskData.priorite,
+        date_debut: taskData.date_debut?.toISOString().split('T')[0],
+        date_fin: taskData.date_fin?.toISOString().split('T')[0],
+        assigned_to: taskData.utilisateurs?.[0]?.id
+      });
 
-    const updatedTasks = project.taches.map(task =>
-      task.id === editingTask.id ? { 
-        ...taskData, 
-        id: editingTask.id, 
-        commentaires: editingTask.commentaires || [],
-        history: newHistory
-      } : task
-    );
+      console.log('✅ Tâche modifiée avec succès');
 
-    const updatedProject = {
-      ...project,
-      taches: updatedTasks,
-      updated_at: new Date()
-    };
+      // Mettre à jour la liste locale
+      const newHistory = [...(editingTask.history || [])];
+      const updatedTasks = project.taches.map(task =>
+        task.id === editingTask.id ? {
+          ...taskData,
+          id: editingTask.id,
+          commentaires: editingTask.commentaires || [],
+          history: newHistory
+        } : task
+      );
 
-    onUpdateProject(updatedProject);
-    setEditingTask(undefined);
+      const updatedProject = {
+        ...project,
+        taches: updatedTasks,
+        updated_at: new Date()
+      };
+
+      onUpdateProject(updatedProject);
+      setEditingTask(undefined);
+      alert('Tâche modifiée avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur modification tâche:', error);
+      alert(`Erreur lors de la modification : ${error.message}`);
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = async (taskId: string) => {
     const taskToDelete = project.taches.find(t => t.id === taskId);
     if (!taskToDelete) return;
 
@@ -268,27 +362,43 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         });
       }
 
-      const updatedTasks = project.taches.filter(task => task.id !== taskId);
-      const updatedProject = {
-        ...project,
-        taches: updatedTasks,
-        updated_at: new Date()
-      };
+      try {
+        console.log('🗑️ Suppression tâche via API:', taskId);
 
-      onUpdateProject(updatedProject);
+        // Appeler l'API pour supprimer la tâche
+        await api.deleteTask(taskId);
 
-      // Close any open modals related to this task
-      if (selectedTaskForComments && selectedTaskForComments.id === taskId) {
-        setSelectedTaskForComments(undefined);
-        setIsCommentsModalOpen(false);
-      }
-      if (selectedTaskForDetails && selectedTaskForDetails.id === taskId) {
-        setSelectedTaskForDetails(undefined);
-        setIsTaskDetailsModalOpen(false);
-      }
-      if (editingTask && editingTask.id === taskId) {
-        setEditingTask(undefined);
-        setIsTaskModalOpen(false);
+        console.log('✅ Tâche supprimée avec succès');
+
+        // Supprimer de la liste locale
+        const updatedTasks = project.taches.filter(task => task.id !== taskId);
+        const updatedProject = {
+          ...project,
+          taches: updatedTasks,
+          updated_at: new Date()
+        };
+
+        onUpdateProject(updatedProject);
+
+        // Close any open modals related to this task
+        if (selectedTaskForComments && selectedTaskForComments.id === taskId) {
+          setSelectedTaskForComments(undefined);
+          setIsCommentsModalOpen(false);
+        }
+        if (selectedTaskForDetails && selectedTaskForDetails.id === taskId) {
+          setSelectedTaskForDetails(undefined);
+          setIsTaskDetailsModalOpen(false);
+        }
+        if (editingTask && editingTask.id === taskId) {
+          setEditingTask(undefined);
+          setIsTaskModalOpen(false);
+        }
+
+        alert('Tâche supprimée avec succès !');
+
+      } catch (error: any) {
+        console.error('❌ Erreur suppression tâche:', error);
+        alert(`Erreur lors de la suppression : ${error.message}`);
       }
     }
   };
