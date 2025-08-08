@@ -219,18 +219,48 @@ function App() {
     setCurrentView('project');
   };
 
-  const handleCreateMember = (memberData: Omit<User, 'id' | 'created_at'>) => {
+  const handleCreateMember = async (memberData: Omit<User, 'id' | 'created_at'>) => {
     if (!PermissionService.hasPermission(currentUser, 'members', 'create')) {
       alert('Vous n\'avez pas les permissions pour créer un membre');
       return;
     }
 
-    const newMember: User = {
-      ...memberData,
-      id: Date.now().toString(),
-      created_at: new Date()
-    };
-    setUsers(prev => [...prev, newMember]);
+    try {
+      console.log('🚀 Création utilisateur via API:', memberData);
+
+      // Appeler l'API pour créer l'utilisateur
+      const createdUser = await api.createUser({
+        nom: memberData.nom,
+        prenom: memberData.prenom,
+        email: memberData.email,
+        fonction: memberData.fonction,
+        role: memberData.role,
+        departement_id: memberData.departement
+      });
+
+      console.log('✅ Utilisateur créé avec succès:', createdUser);
+
+      // Ajouter l'utilisateur créé à la liste locale
+      const newMember: User = {
+        id: createdUser.id,
+        nom: createdUser.nom,
+        prenom: createdUser.prenom,
+        email: createdUser.email,
+        fonction: createdUser.fonction,
+        role: createdUser.role,
+        departement: createdUser.departement,
+        created_at: new Date(createdUser.created_at)
+      };
+
+      setUsers(prev => [...prev, newMember]);
+
+      // Notification de succès
+      alert('Utilisateur créé avec succès !');
+
+    } catch (error: any) {
+      console.error('❌ Erreur création utilisateur:', error);
+      alert(`Erreur lors de la création : ${error.message}`);
+    }
   };
 
   const handleUpdateMember = (id: string, memberData: Omit<User, 'id' | 'created_at'>) => {
