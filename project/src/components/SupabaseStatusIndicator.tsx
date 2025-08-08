@@ -7,17 +7,49 @@ const SupabaseStatusIndicator: React.FC = () => {
 
   useEffect(() => {
     checkSupabaseStatus();
-  }, []);
+
+    // Écouter les changements de localStorage
+    const handleStorageChange = () => {
+      console.log('🔄 Changement localStorage détecté - Mise à jour statut');
+      checkSupabaseStatus();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Vérifier périodiquement les changements (pour les changements dans la même fenêtre)
+    const interval = setInterval(() => {
+      const currentSupabaseState = localStorage.getItem('useSupabase') === 'true';
+      if (currentSupabaseState !== useSupabase) {
+        console.log('🔄 Changement configuration détecté');
+        checkSupabaseStatus();
+      }
+    }, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [useSupabase]);
 
   const checkSupabaseStatus = async () => {
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const useSupabaseEnv = import.meta.env.VITE_USE_SUPABASE === 'true';
-      
-      setUseSupabase(useSupabaseEnv);
 
-      if (!useSupabaseEnv) {
+      // Vérifier d'abord localStorage, puis les variables d'environnement
+      const useSupabaseLocal = localStorage.getItem('useSupabase') === 'true';
+      const useSupabaseEnv = import.meta.env.VITE_USE_SUPABASE === 'true';
+      const shouldUseSupabase = useSupabaseLocal || useSupabaseEnv;
+
+      console.log('🔍 Vérification statut Supabase:', {
+        localStorage: useSupabaseLocal,
+        environment: useSupabaseEnv,
+        final: shouldUseSupabase
+      });
+
+      setUseSupabase(shouldUseSupabase);
+
+      if (!shouldUseSupabase) {
         setStatus('disconnected');
         return;
       }
