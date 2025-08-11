@@ -195,14 +195,38 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       // Convertir les tâches Supabase au format attendu par l'app
       const convertedTasks = response.tasks.map((task: any) => {
         console.log('🔄 Conversion tâche:', task.titre, 'ID:', task.id);
+        // Protection des dates pour éviter les erreurs
+        let dateDebut = undefined;
+        let dateFin = undefined;
+
+        try {
+          if (task.date_debut && task.date_debut !== 'null' && task.date_debut !== '') {
+            dateDebut = new Date(task.date_debut);
+            if (isNaN(dateDebut.getTime())) dateDebut = undefined;
+          }
+        } catch (e) {
+          console.warn('Date début invalide:', task.date_debut);
+          dateDebut = undefined;
+        }
+
+        try {
+          if (task.date_fin && task.date_fin !== 'null' && task.date_fin !== '') {
+            dateFin = new Date(task.date_fin);
+            if (isNaN(dateFin.getTime())) dateFin = undefined;
+          }
+        } catch (e) {
+          console.warn('Date fin invalide:', task.date_fin);
+          dateFin = undefined;
+        }
+
         const convertedTask = {
           id: task.id,
           nom: task.titre || 'Tâche sans nom',
           description: task.description || '',
           etat: task.statut || 'todo',
           priorite: task.priorite || 'medium',
-          date_debut: task.date_debut ? new Date(task.date_debut) : undefined,
-          date_fin: task.date_fin ? new Date(task.date_fin) : undefined,
+          date_debut: dateDebut,
+          date_fin: dateFin,
           utilisateurs: task.assigned_user ? [task.assigned_user] : [],
           commentaires: [],
           history: [],
@@ -255,8 +279,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         description: taskData.description,
         statut: taskData.etat || 'todo', // Valeur par défaut si vide
         priorite: taskData.priorite || 'medium', // Valeur par défaut si vide
-        date_debut: taskData.date_debut?.toISOString().split('T')[0],
-        date_fin: taskData.date_fin?.toISOString().split('T')[0],
+        date_debut: taskData.date_debut && !isNaN(taskData.date_debut.getTime()) ? taskData.date_debut.toISOString().split('T')[0] : null,
+        date_fin: taskData.date_fin && !isNaN(taskData.date_fin.getTime()) ? taskData.date_fin.toISOString().split('T')[0] : null,
         project_id: project.id,
         assigned_to: taskData.utilisateurs?.[0]?.id,
         created_by: currentUser?.id
@@ -271,8 +295,28 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         description: createdTask.description,
         etat: createdTask.statut,
         priorite: createdTask.priorite,
-        date_debut: createdTask.date_debut ? new Date(createdTask.date_debut) : taskData.date_debut,
-        date_fin: createdTask.date_fin ? new Date(createdTask.date_fin) : taskData.date_fin,
+        date_debut: (() => {
+          try {
+            if (createdTask.date_debut) {
+              const date = new Date(createdTask.date_debut);
+              return !isNaN(date.getTime()) ? date : taskData.date_debut;
+            }
+            return taskData.date_debut;
+          } catch (e) {
+            return taskData.date_debut;
+          }
+        })(),
+        date_fin: (() => {
+          try {
+            if (createdTask.date_fin) {
+              const date = new Date(createdTask.date_fin);
+              return !isNaN(date.getTime()) ? date : taskData.date_fin;
+            }
+            return taskData.date_fin;
+          } catch (e) {
+            return taskData.date_fin;
+          }
+        })(),
         utilisateurs: taskData.utilisateurs || [],
         commentaires: [],
         history: [],
@@ -314,8 +358,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         description: taskData.description,
         statut: taskData.etat,
         priorite: taskData.priorite,
-        date_debut: taskData.date_debut?.toISOString().split('T')[0],
-        date_fin: taskData.date_fin?.toISOString().split('T')[0],
+        date_debut: taskData.date_debut && !isNaN(taskData.date_debut.getTime()) ? taskData.date_debut.toISOString().split('T')[0] : null,
+        date_fin: taskData.date_fin && !isNaN(taskData.date_fin.getTime()) ? taskData.date_fin.toISOString().split('T')[0] : null,
         assigned_to: taskData.utilisateurs?.[0]?.id
       });
 
