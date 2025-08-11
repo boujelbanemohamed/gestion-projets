@@ -15,6 +15,7 @@ import KanbanBoard from './KanbanBoard';
 import TaskDetailsModal from './TaskDetailsModal';
 import ProjectAttachmentsModal from './ProjectAttachmentsModal';
 import GanttChart from './GanttChart';
+import { useToast } from './Toast';
 import { isProjectApproachingDeadline, isProjectOverdue, getDaysUntilDeadline, getAlertMessage, getAlertSeverity, getAlertColorClasses, DEFAULT_ALERT_THRESHOLD } from '../utils/alertsConfig';
 import ProjectAlertSettingsModal from './ProjectAlertSettingsModal';
 import ProjectBudgetModal from './ProjectBudgetModal';
@@ -69,6 +70,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
   // Hook API
   const api = useApi();
+
+  // Hook Toast pour notifications éphémères
+  const { showToast, ToastContainer } = useToast();
 
   // Fonction de mapping des statuts Supabase → Interface (GLOBALE)
   const normalizeStatusForUI = (status: string | null): string => {
@@ -432,11 +436,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         loadTasks();
       }, 1000);
 
-      alert('Tâche créée avec succès !');
+      // Notifications éphémères au lieu d'alertes
+      showToast('Tâche créée avec succès !', 'success');
+      setTimeout(() => {
+        showToast('Projet mis à jour', 'info');
+      }, 1000);
 
     } catch (error: any) {
       console.error('❌ Erreur création tâche:', error);
-      alert(`Erreur lors de la création : ${error.message}`);
+      showToast(`Erreur lors de la création : ${error.message}`, 'error');
     }
   };
 
@@ -1475,6 +1483,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         </div>
       </div>
     )}
+
+    {/* Container pour les notifications éphémères */}
+    <ToastContainer />
   </div>
   );
 };
