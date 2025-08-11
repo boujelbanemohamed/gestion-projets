@@ -52,13 +52,15 @@ export interface Database {
       }
       projects: {
         Row: {
-          id: number
+          id: string
           nom: string
           description: string
-          statut: 'planifie' | 'en_cours' | 'en_pause' | 'termine' | 'annule'
+          statut: 'planification' | 'en_cours' | 'en_pause' | 'termine' | 'annule'
           date_debut?: string
           date_fin?: string
           budget?: number
+          devise?: string
+          avancement?: number
           created_by: string
           created_at: string
           updated_at: string
@@ -81,6 +83,45 @@ export interface Database {
           date_debut?: string
           date_fin?: string
           budget?: number
+          updated_at?: string
+        }
+      }
+      tasks: {
+        Row: {
+          id: string
+          titre: string
+          description?: string
+          statut: 'todo' | 'en_cours' | 'termine'
+          priorite: 'low' | 'medium' | 'high'
+          date_debut?: string
+          date_fin?: string
+          project_id: string
+          assigned_to?: string
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          titre: string
+          description?: string
+          statut?: 'todo' | 'en_cours' | 'termine'
+          priorite?: 'low' | 'medium' | 'high'
+          date_debut?: string
+          date_fin?: string
+          project_id: string
+          assigned_to?: string
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          titre?: string
+          description?: string
+          statut?: 'todo' | 'en_cours' | 'termine'
+          priorite?: 'low' | 'medium' | 'high'
+          date_debut?: string
+          date_fin?: string
+          assigned_to?: string
           updated_at?: string
         }
       }

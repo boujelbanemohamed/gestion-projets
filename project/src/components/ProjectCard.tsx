@@ -74,9 +74,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
   }, [project.responsable_id, project.taches]);
 
   return (
-    <div 
+    <div
       onClick={onClick}
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 p-6 group relative"
+      data-project-id={project.id}
+      data-testid={`project-card-${project.id}`}
     >
       {/* Actions Menu */}
       <div className="absolute top-4 right-4 z-10">

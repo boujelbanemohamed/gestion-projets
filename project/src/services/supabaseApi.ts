@@ -4,44 +4,52 @@ import { AuthUser, Project, MeetingMinutes } from '../types'
 type Tables = Database['public']['Tables']
 
 class SupabaseApiService {
-  // Authentification
+  // Authentification sécurisée avec Supabase Auth
   async login(email: string, password: string): Promise<{ user: AuthUser; token: string }> {
-    console.log('🔐 Tentative de connexion Supabase:', email);
+    console.log('🔐 Authentification sécurisée Supabase:', email);
 
     try {
-      // Authentification simplifiée sans Supabase Auth
-      // Rechercher l'utilisateur par email dans notre table users
-      const { data: users, error } = await supabase
+      // Validation des entrées
+      if (!email || !email.includes('@')) {
+        throw new Error('Email invalide');
+      }
+
+      if (!password || password.length < 6) {
+        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
+      }
+
+      // Authentification avec Supabase Auth (sécurisée)
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password: password
+      });
+
+      if (authError) {
+        console.error('❌ Erreur authentification:', authError.message);
+        throw new Error('Email ou mot de passe incorrect');
+      }
+
+      if (!authData.user) {
+        throw new Error('Échec de l\'authentification');
+      }
+
+      console.log('✅ Authentification Supabase réussie:', authData.user.email);
+
+      // Récupérer les données utilisateur depuis notre table
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('email', email)
-        .limit(1)
+        .eq('email', authData.user.email)
+        .single();
 
-      if (error) {
-        console.error('❌ Erreur recherche utilisateur:', error);
-        throw new Error(error.message);
+      if (userError || !userData) {
+        console.error('❌ Utilisateur non trouvé dans la base:', userError);
+        throw new Error('Profil utilisateur non trouvé');
       }
 
-      if (!users || users.length === 0) {
-        console.error('❌ Utilisateur non trouvé:', email);
-        throw new Error('Utilisateur non trouvé');
-      }
+      console.log('✅ Profil utilisateur récupéré:', userData.email);
 
-      const userData = users[0];
-      console.log('✅ Utilisateur trouvé:', userData.email, 'ID:', userData.id);
-
-      // Vérification du mot de passe (accepter tous les mots de passe pour demo)
-      // Pour une vraie application, vous devriez hasher et vérifier les mots de passe
-      if (!password || password.length < 3) {
-        console.error('❌ Mot de passe trop court pour:', email);
-        throw new Error('Mot de passe doit contenir au moins 3 caractères');
-      }
-
-      console.log('✅ Mot de passe accepté pour:', email);
-
-      console.log('✅ Authentification réussie pour:', userData.email);
-
-      // Retourner l'utilisateur avec un token simple
+      // Retourner l'utilisateur avec le token sécurisé Supabase
       return {
         user: {
           id: userData.id,
@@ -52,7 +60,7 @@ class SupabaseApiService {
           fonction: userData.fonction,
           departement_id: userData.department_id,
         },
-        token: 'supabase-simple-' + Date.now(),
+        token: authData.session?.access_token || 'supabase-auth-' + Date.now(),
       }
     } catch (error: any) {
       console.error('❌ Erreur login Supabase:', error);

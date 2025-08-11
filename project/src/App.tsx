@@ -296,16 +296,32 @@ function App() {
         })) : undefined
       };
 
-      setProjects(prev => [...prev, newProject]);
+      // Ajouter le projet à l'état local
+      setProjects(prev => {
+        const updatedProjects = [...prev, newProject];
+        console.log('✅ Projet ajouté à l\'état local:', updatedProjects.length, 'projets');
+        return updatedProjects;
+      });
 
       // Notification de succès
       alert('Projet créé avec succès !');
 
-      // Forcer le rechargement de la page pour voir le nouveau projet
-      console.log('🔄 Rechargement pour afficher le nouveau projet');
+      // Rechargement intelligent : seulement si nécessaire
+      console.log('🔄 Vérification de la synchronisation...');
       setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+        // Vérifier si le projet est visible dans l'interface
+        const projectCards = document.querySelectorAll('[data-project-id]');
+        const isProjectVisible = Array.from(projectCards).some(card =>
+          card.getAttribute('data-project-id') === newProject.id
+        );
+
+        if (!isProjectVisible) {
+          console.log('⚠️ Projet non visible, rechargement nécessaire');
+          window.location.reload();
+        } else {
+          console.log('✅ Projet visible, pas de rechargement nécessaire');
+        }
+      }, 500);
 
     } catch (error: any) {
       console.error('❌ Erreur création projet:', error);

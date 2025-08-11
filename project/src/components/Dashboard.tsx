@@ -5,6 +5,8 @@ import ProjectCard from './ProjectCard';
 import CreateProjectModal from './CreateProjectModal';
 import { isProjectApproachingDeadline, isProjectOverdue, DEFAULT_ALERT_THRESHOLD } from '../utils/alertsConfig';
 import { PermissionService } from '../utils/permissions';
+import CentralErrorHandler from '../services/centralErrorHandler';
+import { normalizeTaskStatusForUI, mapSupabaseTaskStatusToUI } from '../utils/statusMapping';
 
 interface DashboardProps {
   projects: Project[];
@@ -81,14 +83,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             tasksByProject[supabaseTask.project_id] = [];
           }
 
-          // Conversion Supabase → Interface
+          // Conversion Supabase → Interface avec mapping sécurisé
           const convertedTask: Task = {
             id: supabaseTask.id,
             nom: supabaseTask.titre || 'Tâche sans nom',
             description: supabaseTask.description || '',
-            etat: supabaseTask.statut === 'todo' ? 'non_debutee' :
-                  supabaseTask.statut === 'en_cours' ? 'en_cours' :
-                  supabaseTask.statut === 'termine' ? 'cloturee' : 'non_debutee',
+            etat: normalizeTaskStatusForUI(supabaseTask.statut),
             priorite: supabaseTask.priorite || 'medium',
             date_debut: supabaseTask.date_debut ? new Date(supabaseTask.date_debut) : undefined,
             date_fin: supabaseTask.date_fin ? new Date(supabaseTask.date_fin) : undefined,
@@ -121,7 +121,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       onUpdateProjects(updatedProjects);
 
     } catch (error) {
-      console.error('❌ Dashboard: Erreur chargement:', error);
+      const appError = CentralErrorHandler.handle(error, 'Dashboard.loadAllProjectTasks');
+      console.error('❌ Dashboard: Erreur chargement:', appError.message);
+
+      // Afficher une notification d'erreur à l'utilisateur
+      alert(`Erreur de chargement: ${CentralErrorHandler.getUserFriendlyMessage(appError)}`);
     } finally {
       setIsLoadingTasks(false);
     }
