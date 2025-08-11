@@ -227,6 +227,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           priorite: task.priorite || 'medium',
           date_debut: dateDebut,
           date_fin: dateFin,
+          date_realisation: dateFin || dateDebut || new Date(), // CORRECTION: Ajouter date_realisation
+          projet_id: task.project_id,
           utilisateurs: task.assigned_user ? [task.assigned_user] : [],
           commentaires: [],
           history: [],
@@ -289,34 +291,40 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       console.log('✅ Tâche créée avec succès:', createdTask);
 
       // Créer la tâche locale pour l'interface
+      const dateDebut = (() => {
+        try {
+          if (createdTask.date_debut) {
+            const date = new Date(createdTask.date_debut);
+            return !isNaN(date.getTime()) ? date : taskData.date_debut;
+          }
+          return taskData.date_debut;
+        } catch (e) {
+          return taskData.date_debut;
+        }
+      })();
+
+      const dateFin = (() => {
+        try {
+          if (createdTask.date_fin) {
+            const date = new Date(createdTask.date_fin);
+            return !isNaN(date.getTime()) ? date : taskData.date_fin;
+          }
+          return taskData.date_fin;
+        } catch (e) {
+          return taskData.date_fin;
+        }
+      })();
+
       const newTask: Task = {
         id: createdTask.id,
         nom: createdTask.titre,
         description: createdTask.description,
         etat: createdTask.statut,
         priorite: createdTask.priorite,
-        date_debut: (() => {
-          try {
-            if (createdTask.date_debut) {
-              const date = new Date(createdTask.date_debut);
-              return !isNaN(date.getTime()) ? date : taskData.date_debut;
-            }
-            return taskData.date_debut;
-          } catch (e) {
-            return taskData.date_debut;
-          }
-        })(),
-        date_fin: (() => {
-          try {
-            if (createdTask.date_fin) {
-              const date = new Date(createdTask.date_fin);
-              return !isNaN(date.getTime()) ? date : taskData.date_fin;
-            }
-            return taskData.date_fin;
-          } catch (e) {
-            return taskData.date_fin;
-          }
-        })(),
+        date_debut: dateDebut,
+        date_fin: dateFin,
+        date_realisation: dateFin || dateDebut || new Date(), // CORRECTION: Ajouter date_realisation
+        projet_id: project.id,
         utilisateurs: taskData.utilisateurs || [],
         commentaires: [],
         history: [],
