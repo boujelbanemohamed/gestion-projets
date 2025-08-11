@@ -850,6 +850,7 @@ function App() {
           onCreateProject={handleCreateProject}
           onSelectProject={handleSelectProject}
           onDeleteProject={handleDeleteProject}
+          onUpdateProjects={setProjects}
           onNavigateToClosedProjects={() => handleNavigate('closed-projects')}
           onNavigateToMeetingMinutes={() => handleNavigate('meeting-minutes')}
           currentUser={currentUser}

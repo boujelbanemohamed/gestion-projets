@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, BarChart3, Calendar, Filter, Building, Clock, AlertTriangle, Folder, FileText } from 'lucide-react';
-import { Project, Department, User, AuthUser } from '../types';
+import { Project, Department, User, AuthUser, Task } from '../types';
 import ProjectCard from './ProjectCard';
 import CreateProjectModal from './CreateProjectModal';
 import { isProjectApproachingDeadline, isProjectOverdue, DEFAULT_ALERT_THRESHOLD } from '../utils/alertsConfig';
@@ -23,6 +23,7 @@ interface DashboardProps {
   }) => void;
   onSelectProject: (project: Project) => void;
   onDeleteProject: (projectId: string) => void;
+  onUpdateProjects: (projects: Project[]) => void; // Nouvelle prop pour mettre à jour les projets
   availableUsers: User[];
   onNavigateToClosedProjects?: () => void;
   onNavigateToMeetingMinutes?: () => void;
@@ -36,6 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onCreateProject,
   onSelectProject,
   onDeleteProject,
+  onUpdateProjects,
   onNavigateToClosedProjects,
   onNavigateToMeetingMinutes,
   currentUser
@@ -46,6 +48,96 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterDeadline, setFilterDeadline] = useState<'all' | 'approaching' | 'overdue'>('all');
   const [alertThreshold] = useState(DEFAULT_ALERT_THRESHOLD);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+
+  // Fonction de chargement global des tâches pour tous les projets
+  const loadAllProjectTasks = useCallback(async () => {
+    console.log('🚀 Dashboard: Chargement global des tâches pour tous les projets');
+    setIsLoadingTasks(true);
+
+    try {
+      // Récupérer toutes les tâches en une seule requête
+      const response = await fetch('https://obdadipsbbrlwetkuyui.supabase.co/rest/v1/tasks?select=*', {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${response.status}`);
+      }
+
+      const allTasks = await response.json();
+      console.log('✅ Dashboard: Toutes les tâches récupérées:', allTasks.length);
+
+      // Grouper les tâches par projet
+      const tasksByProject: { [projectId: string]: Task[] } = {};
+
+      allTasks.forEach((supabaseTask: any) => {
+        if (supabaseTask.project_id) {
+          if (!tasksByProject[supabaseTask.project_id]) {
+            tasksByProject[supabaseTask.project_id] = [];
+          }
+
+          // Conversion Supabase → Interface
+          const convertedTask: Task = {
+            id: supabaseTask.id,
+            nom: supabaseTask.titre || 'Tâche sans nom',
+            description: supabaseTask.description || '',
+            etat: supabaseTask.statut === 'todo' ? 'non_debutee' :
+                  supabaseTask.statut === 'en_cours' ? 'en_cours' :
+                  supabaseTask.statut === 'termine' ? 'cloturee' : 'non_debutee',
+            priorite: supabaseTask.priorite || 'medium',
+            date_debut: supabaseTask.date_debut ? new Date(supabaseTask.date_debut) : undefined,
+            date_fin: supabaseTask.date_fin ? new Date(supabaseTask.date_fin) : undefined,
+            date_realisation: supabaseTask.date_fin ? new Date(supabaseTask.date_fin) : new Date(),
+            projet_id: supabaseTask.project_id,
+            utilisateurs: [],
+            commentaires: [],
+            history: [],
+            attachments: []
+          };
+
+          tasksByProject[supabaseTask.project_id].push(convertedTask);
+        }
+      });
+
+      console.log('📊 Dashboard: Tâches groupées par projet:', Object.keys(tasksByProject).length, 'projets');
+
+      // Mettre à jour chaque projet avec ses tâches
+      const updatedProjects = projects.map(project => {
+        const projectTasks = tasksByProject[project.id] || [];
+        console.log(`🔄 Dashboard: Projet ${project.nom} - ${projectTasks.length} tâches`);
+
+        return {
+          ...project,
+          taches: projectTasks
+        };
+      });
+
+      console.log('✅ Dashboard: Projets mis à jour avec tâches');
+      onUpdateProjects(updatedProjects);
+
+    } catch (error) {
+      console.error('❌ Dashboard: Erreur chargement tâches globales:', error);
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  }, [projects, onUpdateProjects]);
+
+  // Chargement initial des tâches au montage du Dashboard
+  useEffect(() => {
+    console.log('🎯 Dashboard: Montage - Chargement initial des tâches');
+    loadAllProjectTasks();
+  }, []); // Seulement au montage
+
+  // Rechargement si les projets changent (nouveaux projets ajoutés)
+  useEffect(() => {
+    if (projects.length > 0) {
+      console.log('🔄 Dashboard: Projets modifiés - Rechargement des tâches');
+      loadAllProjectTasks();
+    }
+  }, [projects.length]); // Quand le nombre de projets change
 
   const filteredAndSortedProjects = projects
     .filter(project => {
@@ -144,6 +236,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
             <div className="flex space-x-3">
+              <button
+                onClick={loadAllProjectTasks}
+                disabled={isLoadingTasks}
+                className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 shadow-sm disabled:opacity-50"
+              >
+                <BarChart3 size={20} />
+                <span>{isLoadingTasks ? 'Chargement...' : 'Actualiser Tâches'}</span>
+              </button>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 shadow-sm"
