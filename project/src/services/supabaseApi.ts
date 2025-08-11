@@ -128,11 +128,10 @@ class SupabaseApiService {
   }): Promise<any> {
     console.log('🚀 Création projet Supabase:', projectData);
 
-    // Utiliser NULL par défaut pour éviter la contrainte
-    // Nous découvrirons les valeurs autorisées plus tard
-    const statut = null; // Statut NULL par défaut
+    // Utiliser 'actif' par défaut au lieu de NULL
+    const statut = projectData.statut || 'actif';
 
-    console.log('📊 Statut utilisé (NULL par défaut):', statut);
+    console.log('📊 Statut utilisé:', statut);
 
     const { data, error } = await supabase
       .from('projects')

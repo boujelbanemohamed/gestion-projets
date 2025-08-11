@@ -89,12 +89,29 @@ function App() {
       console.log('🚀 Chargement projets depuis API...');
       const response = await api.getProjects();
 
+      // Normaliser les statuts de projets invalides
+      const normalizeProjectStatus = (status: string | null) => {
+        if (!status || status === '') return 'actif';
+
+        // Mapping des anciens statuts vers les nouveaux
+        const statusMap: { [key: string]: string } = {
+          'planification': 'actif',
+          'active': 'actif',
+          'completed': 'termine',
+          'closed': 'cloture',
+          'suspended': 'suspendu',
+          'on_hold': 'suspendu'
+        };
+
+        return statusMap[status] || status;
+      };
+
       // Convertir les projets Supabase au format attendu par l'app
       const convertedProjects = response.projects.map((project: any) => ({
         id: project.id,
         nom: project.nom,
         description: project.description || '',
-        statut: project.statut || 'planification',
+        statut: normalizeProjectStatus(project.statut),
         date_debut: project.date_debut ? new Date(project.date_debut) : undefined,
         date_fin: project.date_fin ? new Date(project.date_fin) : undefined,
         budget_initial: project.budget,
