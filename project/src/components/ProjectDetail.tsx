@@ -153,15 +153,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
 
   const filteredTasks = project.taches.filter(task => {
-    const matchesStatus = filterStatus === 'all' || task.etat === filterStatus;
+    // Gérer les valeurs null/undefined pour le statut
+    const taskStatus = task.etat || 'todo';
+    const matchesStatus = filterStatus === 'all' || taskStatus === filterStatus;
+
     const matchesMember = filterMember === 'all' || task.utilisateurs.some(user => user.id === filterMember);
-    
+
     // Search by task number (index + 1) or task name
     const taskNumber = (project.taches.indexOf(task) + 1).toString();
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       taskNumber.includes(searchQuery) ||
-      task.nom.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      (task.nom && task.nom.toLowerCase().includes(searchQuery.toLowerCase()));
+
     return matchesStatus && matchesMember && matchesSearch;
   });
 
@@ -192,9 +195,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       // Convertir les tâches Supabase au format attendu par l'app
       const convertedTasks = response.tasks.map((task: any) => {
         console.log('🔄 Conversion tâche:', task.titre, 'ID:', task.id);
-        return {
+        const convertedTask = {
           id: task.id,
-          nom: task.titre,
+          nom: task.titre || 'Tâche sans nom',
           description: task.description || '',
           etat: task.statut || 'todo',
           priorite: task.priorite || 'medium',
@@ -205,6 +208,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           history: [],
           attachments: []
         };
+
+        console.log('✅ Tâche convertie:', convertedTask.nom, 'État:', convertedTask.etat);
+        return convertedTask;
       });
 
       console.log('✅ Tâches converties:', convertedTasks.length);
@@ -235,12 +241,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     try {
       console.log('📝 Création tâche via API:', taskData);
 
-      // Appeler l'API pour créer la tâche
+      // Appeler l'API pour créer la tâche avec les vraies valeurs
+      console.log('📊 Données tâche reçues:', {
+        nom: taskData.nom,
+        etat: taskData.etat,
+        priorite: taskData.priorite,
+        date_debut: taskData.date_debut,
+        date_fin: taskData.date_fin
+      });
+
       const createdTask = await api.createTask({
         titre: taskData.nom,
         description: taskData.description,
-        statut: null, // NULL pour éviter contrainte
-        priorite: null, // NULL pour éviter contrainte
+        statut: taskData.etat || 'todo', // Valeur par défaut si vide
+        priorite: taskData.priorite || 'medium', // Valeur par défaut si vide
         date_debut: taskData.date_debut?.toISOString().split('T')[0],
         date_fin: taskData.date_fin?.toISOString().split('T')[0],
         project_id: project.id,

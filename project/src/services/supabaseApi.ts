@@ -647,8 +647,8 @@ class SupabaseApiService {
       .insert({
         titre: taskData.titre,
         description: taskData.description,
-        statut: null, // NULL par défaut pour éviter la contrainte
-        priorite: null, // NULL par défaut pour éviter la contrainte
+        statut: taskData.statut || 'todo', // Valeur par défaut si null
+        priorite: taskData.priorite || 'medium', // Valeur par défaut si null
         date_debut: taskData.date_debut,
         date_fin: taskData.date_fin,
         project_id: taskData.project_id,
