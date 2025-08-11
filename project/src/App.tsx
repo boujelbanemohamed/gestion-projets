@@ -296,32 +296,20 @@ function App() {
         })) : undefined
       };
 
-      // Ajouter le projet à l'état local
+      // Ajouter le projet à l'état local IMMÉDIATEMENT
+      console.log('📝 Ajout du projet à l\'état local...');
       setProjects(prev => {
         const updatedProjects = [...prev, newProject];
-        console.log('✅ Projet ajouté à l\'état local:', updatedProjects.length, 'projets');
+        console.log('✅ Projets mis à jour:', updatedProjects.length, 'projets total');
+        console.log('🆕 Nouveau projet ajouté:', newProject.nom, 'ID:', newProject.id);
         return updatedProjects;
       });
 
       // Notification de succès
       alert('Projet créé avec succès !');
 
-      // Rechargement intelligent : seulement si nécessaire
-      console.log('🔄 Vérification de la synchronisation...');
-      setTimeout(() => {
-        // Vérifier si le projet est visible dans l'interface
-        const projectCards = document.querySelectorAll('[data-project-id]');
-        const isProjectVisible = Array.from(projectCards).some(card =>
-          card.getAttribute('data-project-id') === newProject.id
-        );
-
-        if (!isProjectVisible) {
-          console.log('⚠️ Projet non visible, rechargement nécessaire');
-          window.location.reload();
-        } else {
-          console.log('✅ Projet visible, pas de rechargement nécessaire');
-        }
-      }, 500);
+      // PAS de rechargement - laisser React gérer l'état
+      console.log('✅ Projet ajouté sans rechargement - React gère l\'affichage');
 
     } catch (error: any) {
       console.error('❌ Erreur création projet:', error);
