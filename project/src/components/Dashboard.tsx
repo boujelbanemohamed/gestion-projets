@@ -51,6 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [filterDeadline, setFilterDeadline] = useState<'all' | 'approaching' | 'overdue'>('all');
   const [alertThreshold] = useState(DEFAULT_ALERT_THRESHOLD);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [hasInitialLoaded, setHasInitialLoaded] = useState(false);
 
   // Hooks pour le chargement avec progression
   const { isLoading, progress, message, startLoading, updateProgress, finishLoading } = useLoadingProgress();
@@ -129,7 +130,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       updateProgress(90, 'Mise à jour des projets...');
       console.log('✅ Dashboard: Projets mis à jour avec tâches');
-      onUpdateProjects(updatedProjects);
+
+      // Utiliser une référence stable pour éviter la boucle
+      if (typeof onUpdateProjects === 'function') {
+        onUpdateProjects(updatedProjects);
+      }
 
       // Finalisation avec notification
       updateProgress(100, 'Chargement terminé !');
@@ -145,21 +150,17 @@ const Dashboard: React.FC<DashboardProps> = ({
     } finally {
       setIsLoadingTasks(false);
     }
-  }, [projects, onUpdateProjects]);
+  }, []); // SUPPRESSION DES DÉPENDANCES pour éviter la boucle infinie
 
-  // Chargement initial des tâches au montage du Dashboard
+  // Chargement initial des tâches au montage du Dashboard UNIQUEMENT
   useEffect(() => {
     console.log('🎯 Dashboard: Montage - Chargement initial des tâches');
-    loadAllProjectTasks();
-  }, []); // Seulement au montage
-
-  // Rechargement si les projets changent (nouveaux projets ajoutés)
-  useEffect(() => {
-    if (projects.length > 0) {
-      console.log('🔄 Dashboard: Projets modifiés - Rechargement des tâches');
+    if (projects.length > 0 && !hasInitialLoaded && !isLoadingTasks) {
+      console.log('✅ Conditions remplies pour chargement initial');
+      setHasInitialLoaded(true);
       loadAllProjectTasks();
     }
-  }, [projects.length]); // Quand le nombre de projets change
+  }, [projects.length, hasInitialLoaded, isLoadingTasks]); // Dépendances contrôlées
 
   const filteredAndSortedProjects = projects
     .filter(project => {
