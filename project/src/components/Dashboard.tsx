@@ -5,8 +5,6 @@ import ProjectCard from './ProjectCard';
 import CreateProjectModal from './CreateProjectModal';
 import { isProjectApproachingDeadline, isProjectOverdue, DEFAULT_ALERT_THRESHOLD } from '../utils/alertsConfig';
 import { PermissionService } from '../utils/permissions';
-import LoadingBar, { useLoadingProgress, ProjectCardSkeleton } from './LoadingBar';
-import { useToast } from './Toast';
 
 interface DashboardProps {
   projects: Project[];
@@ -51,37 +49,28 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [filterDeadline, setFilterDeadline] = useState<'all' | 'approaching' | 'overdue'>('all');
   const [alertThreshold] = useState(DEFAULT_ALERT_THRESHOLD);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
-  const [hasInitialLoaded, setHasInitialLoaded] = useState(false);
 
-  // Hooks pour le chargement avec progression
-  const { isLoading, progress, message, startLoading, updateProgress, finishLoading } = useLoadingProgress();
-  const { showToast, ToastContainer } = useToast();
-
-  // Fonction de chargement global des tâches pour tous les projets
+  // Fonction simple de chargement des tâches
   const loadAllProjectTasks = useCallback(async () => {
-    console.log('🚀 Dashboard: Chargement global des tâches pour tous les projets');
+    if (isLoadingTasks) return; // Éviter les chargements multiples
+
+    console.log('🚀 Dashboard: Chargement simple des tâches');
     setIsLoadingTasks(true);
-    startLoading('Initialisation du chargement...');
 
     try {
-      updateProgress(10, 'Connexion à la base de données...');
-      // Récupérer toutes les tâches en une seule requête
-      updateProgress(30, 'Récupération des tâches...');
       const response = await fetch('https://obdadipsbbrlwetkuyui.supabase.co/rest/v1/tasks?select=*', {
         headers: {
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo'
         }
       });
 
-      updateProgress(50, 'Traitement de la réponse...');
-
       if (!response.ok) {
-        throw new Error(`Erreur API: ${response.status}`);
+        console.error('❌ Erreur API:', response.status);
+        return;
       }
 
       const allTasks = await response.json();
-      console.log('✅ Dashboard: Toutes les tâches récupérées:', allTasks.length);
-      updateProgress(70, `${allTasks.length} tâches récupérées, traitement...`);
+      console.log('✅ Dashboard: Tâches récupérées:', allTasks.length);
 
       // Grouper les tâches par projet
       const tasksByProject: { [projectId: string]: Task[] } = {};
@@ -115,21 +104,12 @@ const Dashboard: React.FC<DashboardProps> = ({
         }
       });
 
-      console.log('📊 Dashboard: Tâches groupées par projet:', Object.keys(tasksByProject).length, 'projets');
+      console.log('📊 Dashboard: Tâches groupées par projet:', Object.keys(tasksByProject).length);
 
       // Mettre à jour chaque projet avec ses tâches
-      // Si projects est vide, on ne peut pas mettre à jour, mais on peut quand même notifier
-      if (projects.length === 0) {
-        console.log('⚠️ Dashboard: Aucun projet à mettre à jour');
-        updateProgress(100, 'Aucun projet trouvé');
-        finishLoading();
-        showToast('Aucun projet trouvé. Créez votre premier projet !', 'info', 4000);
-        return;
-      }
-
       const updatedProjects = projects.map(project => {
         const projectTasks = tasksByProject[project.id] || [];
-        console.log(`🔄 Dashboard: Projet ${project.nom} - ${projectTasks.length} tâches`);
+        console.log(`🔄 Projet ${project.nom}: ${projectTasks.length} tâches`);
 
         return {
           ...project,
@@ -137,59 +117,23 @@ const Dashboard: React.FC<DashboardProps> = ({
         };
       });
 
-      updateProgress(90, 'Mise à jour des projets...');
-      console.log('✅ Dashboard: Projets mis à jour avec tâches');
-
-      // Utiliser une référence stable pour éviter la boucle
-      if (typeof onUpdateProjects === 'function') {
-        onUpdateProjects(updatedProjects);
-      }
-
-      // Finalisation avec notification
-      updateProgress(100, 'Chargement terminé !');
-      finishLoading();
-
-      // Notification de succès
-      showToast(`Dashboard mis à jour avec ${Object.keys(tasksByProject).length} projets et ${allTasks.length} tâches`, 'success', 4000);
+      console.log('✅ Dashboard: Mise à jour des projets');
+      onUpdateProjects(updatedProjects);
 
     } catch (error) {
-      console.error('❌ Dashboard: Erreur chargement tâches globales:', error);
-      finishLoading();
-      showToast(`Erreur lors du chargement: ${error instanceof Error ? error.message : 'Erreur inconnue'}`, 'error');
+      console.error('❌ Dashboard: Erreur chargement:', error);
     } finally {
       setIsLoadingTasks(false);
     }
-  }, []); // SUPPRESSION DES DÉPENDANCES pour éviter la boucle infinie
+  }, []);
 
-  // Chargement initial des tâches au montage du Dashboard
+  // Chargement simple au montage
   useEffect(() => {
-    console.log('🎯 Dashboard: Montage - Chargement initial des tâches');
-    console.log('📊 État:', {
-      projectsLength: projects.length,
-      hasInitialLoaded,
-      isLoadingTasks
-    });
-
-    // Charger même si projects.length = 0 (projets peuvent être vides mais exister)
-    if (!hasInitialLoaded && !isLoadingTasks) {
-      console.log('✅ Conditions remplies pour chargement initial');
-      setHasInitialLoaded(true);
+    console.log('🎯 Dashboard: Chargement au montage');
+    if (projects.length > 0) {
       loadAllProjectTasks();
     }
-  }, [projects.length, hasInitialLoaded, isLoadingTasks]); // Dépendances contrôlées
-
-  // Chargement de secours si rien ne se passe après 2 secondes
-  useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      if (!hasInitialLoaded && !isLoadingTasks) {
-        console.log('🔄 Chargement de secours déclenché');
-        setHasInitialLoaded(true);
-        loadAllProjectTasks();
-      }
-    }, 2000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, []); // Une seule fois au montage
+  }, [projects.length]); // Se déclenche quand les projets sont chargés
 
   const filteredAndSortedProjects = projects
     .filter(project => {
@@ -275,14 +219,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Barre de chargement */}
-      <LoadingBar
-        isLoading={isLoading}
-        progress={progress}
-        message={message}
-        showMessage={true}
-      />
-
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -302,7 +238,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 shadow-sm disabled:opacity-50"
               >
                 <BarChart3 size={20} />
-                <span>{isLoadingTasks ? 'Chargement...' : 'Actualiser Tâches'}</span>
+                <span>{isLoadingTasks ? 'Chargement...' : 'Actualiser'}</span>
               </button>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
@@ -458,11 +394,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Projects Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <ProjectCardSkeleton key={index} />
-            ))}
+        {isLoadingTasks ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement des projets...</p>
           </div>
         ) : filteredAndSortedProjects.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
@@ -506,9 +441,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         departments={departments}
         availableUsers={availableUsers}
       />
-
-      {/* Container pour les notifications */}
-      <ToastContainer />
     </div>
   );
 };
