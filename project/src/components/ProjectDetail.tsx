@@ -219,11 +219,28 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           dateFin = undefined;
         }
 
+        // Normaliser les statuts invalides
+        const normalizeStatus = (status: string | null) => {
+          if (!status || status === '') return 'todo';
+
+          // Mapping des anciens statuts vers les nouveaux
+          const statusMap: { [key: string]: string } = {
+            'non_debutee': 'todo',
+            'cloturee': 'termine',
+            'in_progress': 'en_cours',
+            'cancelled': 'annule',
+            'completed': 'termine',
+            'pending': 'todo'
+          };
+
+          return statusMap[status] || status;
+        };
+
         const convertedTask = {
           id: task.id,
           nom: task.titre || 'Tâche sans nom',
           description: task.description || '',
-          etat: task.statut || 'todo',
+          etat: normalizeStatus(task.statut),
           priorite: task.priorite || 'medium',
           date_debut: dateDebut,
           date_fin: dateFin,
