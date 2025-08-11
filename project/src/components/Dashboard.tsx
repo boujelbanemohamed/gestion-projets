@@ -5,6 +5,8 @@ import ProjectCard from './ProjectCard';
 import CreateProjectModal from './CreateProjectModal';
 import { isProjectApproachingDeadline, isProjectOverdue, DEFAULT_ALERT_THRESHOLD } from '../utils/alertsConfig';
 import { PermissionService } from '../utils/permissions';
+import LoadingBar, { useLoadingProgress, ProjectCardSkeleton } from './LoadingBar';
+import { useToast } from './Toast';
 
 interface DashboardProps {
   projects: Project[];
@@ -50,18 +52,27 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [alertThreshold] = useState(DEFAULT_ALERT_THRESHOLD);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
 
+  // Hooks pour le chargement avec progression
+  const { isLoading, progress, message, startLoading, updateProgress, finishLoading } = useLoadingProgress();
+  const { showToast, ToastContainer } = useToast();
+
   // Fonction de chargement global des tâches pour tous les projets
   const loadAllProjectTasks = useCallback(async () => {
     console.log('🚀 Dashboard: Chargement global des tâches pour tous les projets');
     setIsLoadingTasks(true);
+    startLoading('Initialisation du chargement...');
 
     try {
+      updateProgress(10, 'Connexion à la base de données...');
       // Récupérer toutes les tâches en une seule requête
+      updateProgress(30, 'Récupération des tâches...');
       const response = await fetch('https://obdadipsbbrlwetkuyui.supabase.co/rest/v1/tasks?select=*', {
         headers: {
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo'
         }
       });
+
+      updateProgress(50, 'Traitement de la réponse...');
 
       if (!response.ok) {
         throw new Error(`Erreur API: ${response.status}`);
@@ -69,6 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       const allTasks = await response.json();
       console.log('✅ Dashboard: Toutes les tâches récupérées:', allTasks.length);
+      updateProgress(70, `${allTasks.length} tâches récupérées, traitement...`);
 
       // Grouper les tâches par projet
       const tasksByProject: { [projectId: string]: Task[] } = {};
@@ -115,11 +127,21 @@ const Dashboard: React.FC<DashboardProps> = ({
         };
       });
 
+      updateProgress(90, 'Mise à jour des projets...');
       console.log('✅ Dashboard: Projets mis à jour avec tâches');
       onUpdateProjects(updatedProjects);
 
+      // Finalisation avec notification
+      updateProgress(100, 'Chargement terminé !');
+      finishLoading();
+
+      // Notification de succès
+      showToast(`Dashboard mis à jour avec ${Object.keys(tasksByProject).length} projets et ${allTasks.length} tâches`, 'success', 4000);
+
     } catch (error) {
       console.error('❌ Dashboard: Erreur chargement tâches globales:', error);
+      finishLoading();
+      showToast(`Erreur lors du chargement: ${error instanceof Error ? error.message : 'Erreur inconnue'}`, 'error');
     } finally {
       setIsLoadingTasks(false);
     }
@@ -223,6 +245,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Barre de chargement */}
+      <LoadingBar
+        isLoading={isLoading}
+        progress={progress}
+        message={message}
+        showMessage={true}
+      />
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -398,7 +428,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Projects Grid */}
-        {filteredAndSortedProjects.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ProjectCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : filteredAndSortedProjects.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center">
             <BarChart3 className="mx-auto text-gray-400 mb-4" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -440,6 +476,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         departments={departments}
         availableUsers={availableUsers}
       />
+
+      {/* Container pour les notifications */}
+      <ToastContainer />
     </div>
   );
 };
