@@ -118,8 +118,42 @@ function App() {
 
   // Check for existing authentication on app load
   useEffect(() => {
-    // Pour Supabase, on vérifiera la session automatiquement
-    // Pour l'instant, on ouvre directement le modal de connexion
+    console.log('🔍 Vérification session existante...');
+
+    // Vérifier s'il y a une session sauvegardée
+    const savedSession = localStorage.getItem('sb-obdadipsbbrlwetkuyui-auth-token');
+    const savedUser = localStorage.getItem('currentUser');
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+
+    if (savedSession && savedUser && isAuth) {
+      try {
+        const sessionData = JSON.parse(savedSession);
+        const userData = JSON.parse(savedUser);
+
+        // Vérifier que la session n'est pas trop ancienne (24h)
+        const sessionAge = Date.now() - sessionData.timestamp;
+        const maxAge = 24 * 60 * 60 * 1000; // 24 heures
+
+        if (sessionAge < maxAge) {
+          console.log('✅ Session valide trouvée:', userData.email);
+          setCurrentUser(userData);
+          setIsLoginModalOpen(false);
+          return;
+        } else {
+          console.log('⏰ Session expirée, nettoyage...');
+          localStorage.removeItem('sb-obdadipsbbrlwetkuyui-auth-token');
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('isAuthenticated');
+        }
+      } catch (error) {
+        console.error('❌ Erreur parsing session:', error);
+        localStorage.removeItem('sb-obdadipsbbrlwetkuyui-auth-token');
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('isAuthenticated');
+      }
+    }
+
+    console.log('🔐 Aucune session valide, ouverture modal connexion');
     setIsLoginModalOpen(true);
   }, []);
 
@@ -153,10 +187,21 @@ function App() {
   };
 
   const handleLogout = () => {
+    console.log('🚪 Déconnexion utilisateur');
+
+    // Nettoyer toutes les données de session
+    localStorage.removeItem('sb-obdadipsbbrlwetkuyui-auth-token');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('auth_user');
+    localStorage.removeItem('auth_token');
+
     setCurrentUser(null);
     setSelectedProject(null);
     setCurrentView('dashboard');
     setIsLoginModalOpen(true);
+
+    console.log('✅ Session nettoyée');
   };
 
   const handleProfileUpdate = (updatedUser: AuthUser) => {

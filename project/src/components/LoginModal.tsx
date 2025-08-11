@@ -24,10 +24,27 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
     setIsLoading(true);
 
     try {
+      console.log('🔐 Tentative de connexion:', email);
+
       // Utiliser l'API Supabase ou locale selon la configuration
       const response = await api.login(email, password);
 
       if (response.user) {
+        console.log('✅ Connexion réussie:', response.user.email);
+
+        // SAUVEGARDER LA SESSION DANS LOCALSTORAGE
+        const sessionData = {
+          user: response.user,
+          token: response.token,
+          timestamp: Date.now()
+        };
+
+        localStorage.setItem('sb-obdadipsbbrlwetkuyui-auth-token', JSON.stringify(sessionData));
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+        localStorage.setItem('isAuthenticated', 'true');
+
+        console.log('💾 Session sauvegardée dans localStorage');
+
         onLogin(response.user);
         onClose();
         setEmail('');
@@ -36,7 +53,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
         setError('Email ou mot de passe incorrect');
       }
     } catch (error: any) {
-      console.error('Erreur de connexion:', error);
+      console.error('❌ Erreur connexion:', error);
       setError(error.message || 'Email ou mot de passe incorrect');
     } finally {
       setIsLoading(false);
