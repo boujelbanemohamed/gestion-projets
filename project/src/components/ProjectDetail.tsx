@@ -71,7 +71,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
   const api = useApi();
 
   // Fonction de mapping des statuts Supabase → Interface (GLOBALE)
-  const normalizeStatusForUI = useCallback((status: string | null) => {
+  const normalizeStatusForUI = (status: string | null): string => {
     if (!status || status === '') {
       console.log(`🔄 Mapping statut: ${status} → non_debutee (défaut)`);
       return 'non_debutee';
@@ -92,7 +92,19 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     const mapped = statusMap[status] || 'non_debutee';
     console.log(`🔄 MAPPING FINAL: ${status} → ${mapped}`);
     return mapped;
-  }, []);
+  };
+
+  // Fonction de mapping inverse Interface → Supabase (GLOBALE)
+  const mapStatusToSupabase = (status: string): string => {
+    const statusMap: { [key: string]: string } = {
+      'non_debutee': 'todo',
+      'en_cours': 'en_cours',
+      'cloturee': 'termine'
+    };
+    const mapped = statusMap[status] || 'todo';
+    console.log(`🔄 Mapping inverse: ${status} → ${mapped}`);
+    return mapped;
+  };
 
   // Callback optimisé pour recevoir les tâches du composant TaskList
   const handleTasksLoaded = useCallback((loadedTasks: Task[]) => {
@@ -348,15 +360,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         date_fin: taskData.date_fin
       });
 
-      // Mapping Interface → Supabase
-      const mapStatusToSupabase = (status: string) => {
-        const statusMap: { [key: string]: string } = {
-          'non_debutee': 'todo',
-          'en_cours': 'en_cours',
-          'cloturee': 'termine'
-        };
-        return statusMap[status] || 'todo';
-      };
+      // Utilisation de la fonction globale mapStatusToSupabase
 
       const createdTask = await api.createTask({
         titre: taskData.nom,
@@ -442,15 +446,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     try {
       console.log('🔄 Modification tâche via API:', editingTask.id, taskData);
 
-      // Mapping Interface → Supabase pour modification
-      const mapStatusToSupabase = (status: string) => {
-        const statusMap: { [key: string]: string } = {
-          'non_debutee': 'todo',
-          'en_cours': 'en_cours',
-          'cloturee': 'termine'
-        };
-        return statusMap[status] || 'todo';
-      };
+      // Utilisation de la fonction globale mapStatusToSupabase
 
       // Appeler l'API pour modifier la tâche
       await api.updateTask(editingTask.id, {
