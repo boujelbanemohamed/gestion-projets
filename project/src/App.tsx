@@ -301,6 +301,12 @@ function App() {
       // Notification de succès
       alert('Projet créé avec succès !');
 
+      // Forcer le rechargement de la page pour voir le nouveau projet
+      console.log('🔄 Rechargement pour afficher le nouveau projet');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+
     } catch (error: any) {
       console.error('❌ Erreur création projet:', error);
       alert(`Erreur lors de la création : ${error.message}`);
