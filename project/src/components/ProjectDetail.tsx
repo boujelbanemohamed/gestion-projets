@@ -192,6 +192,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
   const loadTasks = async () => {
     try {
       console.log('🚀 CORRECTION FINALE: Chargement tâches depuis API pour projet:', project.id);
+      console.log('🔍 Vérification API disponible:', typeof api, api.constructor?.name);
+
+      if (!api || !api.getTasks) {
+        console.error('❌ API non disponible ou getTasks manquant');
+        return;
+      }
+
       const response = await api.getTasks(project.id);
 
       console.log('📊 RÉPONSE API COMPLÈTE:', response);
@@ -299,7 +306,59 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
     } catch (error) {
       console.error('❌ Erreur lors du chargement des tâches:', error);
-      // En cas d'erreur, garder les tâches existantes
+
+      // FALLBACK: API directe Supabase si useApi échoue
+      console.log('🔄 FALLBACK: Tentative API directe Supabase...');
+      try {
+        const directResponse = await fetch(`https://obdadipsbbrlwetkuyui.supabase.co/rest/v1/tasks?select=*&project_id=eq.${project.id}`, {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo'
+          }
+        });
+
+        const directTasks = await directResponse.json();
+        console.log('✅ FALLBACK RÉUSSI:', directTasks.length, 'tâches');
+
+        if (directTasks.length > 0) {
+          // Traiter les tâches avec le même mapping
+          const convertedTasks = directTasks.map((task: any) => {
+            const mapped = task.statut === 'todo' ? 'non_debutee' :
+                          task.statut === 'en_cours' ? 'en_cours' :
+                          task.statut === 'termine' ? 'cloturee' : 'non_debutee';
+
+            console.log(`🔄 MAPPING FALLBACK: ${task.statut} → ${mapped}`);
+
+            return {
+              id: task.id,
+              nom: task.titre || 'Tâche sans nom',
+              description: task.description || '',
+              etat: mapped,
+              priorite: task.priorite || 'medium',
+              date_debut: task.date_debut ? new Date(task.date_debut) : undefined,
+              date_fin: task.date_fin ? new Date(task.date_fin) : undefined,
+              date_realisation: task.date_fin ? new Date(task.date_fin) : new Date(),
+              projet_id: task.project_id,
+              utilisateurs: [],
+              commentaires: [],
+              history: [],
+              attachments: []
+            };
+          });
+
+          console.log('✅ FALLBACK: Tâches converties:', convertedTasks.length);
+
+          const updatedProject = {
+            ...project,
+            taches: convertedTasks
+          };
+
+          onUpdateProject(updatedProject);
+          console.log('✅ FALLBACK: Projet mis à jour avec', convertedTasks.length, 'tâches');
+        }
+
+      } catch (fallbackError) {
+        console.error('❌ FALLBACK échoué:', fallbackError);
+      }
     }
   };
 
