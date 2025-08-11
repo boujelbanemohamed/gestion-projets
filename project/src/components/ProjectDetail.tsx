@@ -230,8 +230,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       const createdTask = await api.createTask({
         titre: taskData.nom,
         description: taskData.description,
-        statut: taskData.etat || 'todo',
-        priorite: taskData.priorite || 'medium',
+        statut: null, // NULL pour éviter contrainte
+        priorite: null, // NULL pour éviter contrainte
         date_debut: taskData.date_debut?.toISOString().split('T')[0],
         date_fin: taskData.date_fin?.toISOString().split('T')[0],
         project_id: project.id,
@@ -263,6 +263,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       };
 
       onUpdateProject(updatedProject);
+
+      // Recharger les tâches depuis l'API pour s'assurer de la synchronisation
+      setTimeout(() => {
+        loadTasks();
+      }, 1000);
+
       alert('Tâche créée avec succès !');
 
     } catch (error: any) {
