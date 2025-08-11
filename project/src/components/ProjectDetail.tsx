@@ -44,7 +44,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedTaskForComments, setSelectedTaskForComments] = useState<Task | undefined>();
   const [isProjectEditModalOpen, setIsProjectEditModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt' | 'tasklist'>('tasklist');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt'>('kanban');
   const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false);
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | undefined>();
   const [isAttachmentsModalOpen, setIsAttachmentsModalOpen] = useState(false);
@@ -202,33 +202,38 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     };
   };
 
-  // CORRECTION FINALE: Charger les tâches depuis l'API
+  // SOLUTION SIMPLE: Chargement direct des tâches
   const loadTasks = async () => {
     try {
-      console.log('🚀 CORRECTION FINALE: Chargement tâches depuis API pour projet:', project.id);
-      console.log('🔍 Vérification API disponible:', typeof api, api.constructor?.name);
+      console.log('🚀 SOLUTION SIMPLE: Chargement tâches pour projet:', project.id);
 
-      if (!api || !api.getTasks) {
-        console.error('❌ API non disponible ou getTasks manquant');
-        return;
+      // API directe Supabase (plus fiable)
+      const response = await fetch(`https://obdadipsbbrlwetkuyui.supabase.co/rest/v1/tasks?select=*&project_id=eq.${project.id}`, {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${response.status}`);
       }
 
-      const response = await api.getTasks(project.id);
+      const supabaseTasks = await response.json();
 
-      console.log('📊 RÉPONSE API COMPLÈTE:', response);
-      console.log('📊 NOMBRE TÂCHES REÇUES:', response.tasks?.length || 0);
+      console.log('✅ SOLUTION SIMPLE: Tâches reçues:', supabaseTasks.length);
 
-      if (response.tasks && response.tasks.length > 0) {
-        console.log('✅ TÂCHES TROUVÉES EN API !');
-        response.tasks.forEach((task, index) => {
+      if (supabaseTasks.length > 0) {
+        console.log('📋 Détails tâches:');
+        supabaseTasks.forEach((task, index) => {
           console.log(`   ${index + 1}. ${task.titre} - Statut: ${task.statut}`);
         });
       } else {
-        console.log('❌ AUCUNE TÂCHE REÇUE DE L\'API');
+        console.log('❌ Aucune tâche pour ce projet');
+        return;
       }
 
-      // Convertir les tâches Supabase au format attendu par l'app
-      const convertedTasks = response.tasks.map((task: any) => {
+      // Conversion simple Supabase → Interface
+      const convertedTasks = supabaseTasks.map((task: any) => {
         console.log('🔄 Conversion tâche:', task.titre, 'ID:', task.id);
         // Protection des dates pour éviter les erreurs
         let dateDebut = undefined;
@@ -319,60 +324,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       console.log('✅ Projet mis à jour avec tâches:', updatedProject.taches.length);
 
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des tâches:', error);
-
-      // FALLBACK: API directe Supabase si useApi échoue
-      console.log('🔄 FALLBACK: Tentative API directe Supabase...');
-      try {
-        const directResponse = await fetch(`https://obdadipsbbrlwetkuyui.supabase.co/rest/v1/tasks?select=*&project_id=eq.${project.id}`, {
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo'
-          }
-        });
-
-        const directTasks = await directResponse.json();
-        console.log('✅ FALLBACK RÉUSSI:', directTasks.length, 'tâches');
-
-        if (directTasks.length > 0) {
-          // Traiter les tâches avec le même mapping
-          const convertedTasks = directTasks.map((task: any) => {
-            const mapped = task.statut === 'todo' ? 'non_debutee' :
-                          task.statut === 'en_cours' ? 'en_cours' :
-                          task.statut === 'termine' ? 'cloturee' : 'non_debutee';
-
-            console.log(`🔄 MAPPING FALLBACK: ${task.statut} → ${mapped}`);
-
-            return {
-              id: task.id,
-              nom: task.titre || 'Tâche sans nom',
-              description: task.description || '',
-              etat: mapped,
-              priorite: task.priorite || 'medium',
-              date_debut: task.date_debut ? new Date(task.date_debut) : undefined,
-              date_fin: task.date_fin ? new Date(task.date_fin) : undefined,
-              date_realisation: task.date_fin ? new Date(task.date_fin) : new Date(),
-              projet_id: task.project_id,
-              utilisateurs: [],
-              commentaires: [],
-              history: [],
-              attachments: []
-            };
-          });
-
-          console.log('✅ FALLBACK: Tâches converties:', convertedTasks.length);
-
-          const updatedProject = {
-            ...project,
-            taches: convertedTasks
-          };
-
-          onUpdateProject(updatedProject);
-          console.log('✅ FALLBACK: Projet mis à jour avec', convertedTasks.length, 'tâches');
-        }
-
-      } catch (fallbackError) {
-        console.error('❌ FALLBACK échoué:', fallbackError);
-      }
+      console.error('❌ Erreur chargement tâches:', error);
     }
   };
 
@@ -1093,17 +1045,6 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
               <div className="flex items-center space-x-4">
                 <div className="flex items-center bg-gray-100 rounded-lg p-1">
                   <button
-                    onClick={() => setViewMode('tasklist')}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                      viewMode === 'tasklist'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    <CheckCircle size={16} />
-                    <span>Tâches</span>
-                  </button>
-                  <button
                     onClick={() => setViewMode('kanban')}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                       viewMode === 'kanban'
@@ -1280,11 +1221,6 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
                   </div>
                 )}
               </div>
-            ) : viewMode === 'tasklist' ? (
-              <TaskList
-                projectId={project.id}
-                onTasksLoaded={handleTasksLoaded}
-              />
             ) : viewMode === 'kanban' ? (
               <KanbanBoard
                 tasks={project.taches}
