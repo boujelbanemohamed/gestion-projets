@@ -70,6 +70,30 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
   // Hook API
   const api = useApi();
 
+  // Fonction de mapping des statuts Supabase → Interface (GLOBALE)
+  const normalizeStatusForUI = useCallback((status: string | null) => {
+    if (!status || status === '') {
+      console.log(`🔄 Mapping statut: ${status} → non_debutee (défaut)`);
+      return 'non_debutee';
+    }
+
+    // Mapping Supabase → Interface Frontend (DÉFINITIF)
+    const statusMap: { [key: string]: string } = {
+      'todo': 'non_debutee',        // ESSENTIEL: todo → non_debutee
+      'en_cours': 'en_cours',       // en_cours → en_cours
+      'termine': 'cloturee',        // termine → cloturee
+      'annule': 'cloturee',         // annule → cloturee
+      'completed': 'cloturee',
+      'pending': 'non_debutee',
+      'in_progress': 'en_cours',
+      'cancelled': 'cloturee'
+    };
+
+    const mapped = statusMap[status] || 'non_debutee';
+    console.log(`🔄 MAPPING FINAL: ${status} → ${mapped}`);
+    return mapped;
+  }, []);
+
   // Callback optimisé pour recevoir les tâches du composant TaskList
   const handleTasksLoaded = useCallback((loadedTasks: Task[]) => {
     console.log('🎯 ProjectDetail: Tâches reçues du TaskList:', loadedTasks.length);
@@ -259,29 +283,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           dateFin = undefined;
         }
 
-        // CORRECTION FINALE: Normaliser les statuts pour l'interface (Supabase → Frontend)
-        const normalizeStatusForUI = (status: string | null) => {
-          if (!status || status === '') {
-            console.log(`🔄 Mapping statut: ${status} → non_debutee (défaut)`);
-            return 'non_debutee';
-          }
-
-          // Mapping Supabase → Interface Frontend (DÉFINITIF)
-          const statusMap: { [key: string]: string } = {
-            'todo': 'non_debutee',        // ESSENTIEL: todo → non_debutee
-            'en_cours': 'en_cours',       // en_cours → en_cours
-            'termine': 'cloturee',        // termine → cloturee
-            'annule': 'cloturee',         // annule → cloturee
-            'completed': 'cloturee',
-            'pending': 'non_debutee',
-            'in_progress': 'en_cours',
-            'cancelled': 'cloturee'
-          };
-
-          const mapped = statusMap[status] || 'non_debutee';
-          console.log(`🔄 MAPPING FINAL: ${status} → ${mapped}`);
-          return mapped;
-        };
+        // Utilisation de la fonction globale normalizeStatusForUI
 
         const convertedTask = {
           id: task.id,
