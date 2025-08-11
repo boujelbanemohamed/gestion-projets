@@ -9,6 +9,7 @@ import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
 import TaskCommentsModal from './TaskCommentsModal';
 import ProjectMembersModal from './ProjectMembersModal';
+import TaskList from './TaskList';
 import ProjectEditModal from './ProjectEditModal';
 import KanbanBoard from './KanbanBoard';
 import TaskDetailsModal from './TaskDetailsModal';
@@ -43,7 +44,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedTaskForComments, setSelectedTaskForComments] = useState<Task | undefined>();
   const [isProjectEditModalOpen, setIsProjectEditModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt'>('kanban');
+  const [viewMode, setViewMode] = useState<'list' | 'kanban' | 'gantt' | 'tasklist'>('tasklist');
   const [isTaskDetailsModalOpen, setIsTaskDetailsModalOpen] = useState(false);
   const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | undefined>();
   const [isAttachmentsModalOpen, setIsAttachmentsModalOpen] = useState(false);
@@ -68,6 +69,19 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
   // Hook API
   const api = useApi();
+
+  // Callback optimisé pour recevoir les tâches du composant TaskList
+  const handleTasksLoaded = useCallback((loadedTasks: Task[]) => {
+    console.log('🎯 ProjectDetail: Tâches reçues du TaskList:', loadedTasks.length);
+
+    const updatedProject = {
+      ...project,
+      taches: loadedTasks
+    };
+
+    onUpdateProject(updatedProject);
+    console.log('✅ ProjectDetail: Projet mis à jour avec', loadedTasks.length, 'tâches');
+  }, [project, onUpdateProject]);
 
   // Memoized calculations for performance
   const hasBudget = useMemo(() =>
@@ -1079,10 +1093,21 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
               <div className="flex items-center space-x-4">
                 <div className="flex items-center bg-gray-100 rounded-lg p-1">
                   <button
+                    onClick={() => setViewMode('tasklist')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                      viewMode === 'tasklist'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <CheckCircle size={16} />
+                    <span>Tâches</span>
+                  </button>
+                  <button
                     onClick={() => setViewMode('kanban')}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                      viewMode === 'kanban' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
+                      viewMode === 'kanban'
+                        ? 'bg-white text-blue-600 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
@@ -1255,6 +1280,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
                   </div>
                 )}
               </div>
+            ) : viewMode === 'tasklist' ? (
+              <TaskList
+                projectId={project.id}
+                onTasksLoaded={handleTasksLoaded}
+              />
             ) : viewMode === 'kanban' ? (
               <KanbanBoard
                 tasks={project.taches}
