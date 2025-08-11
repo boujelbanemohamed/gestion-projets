@@ -186,22 +186,29 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       console.log('📝 Chargement tâches depuis API pour projet:', project.id);
       const response = await api.getTasks(project.id);
 
-      // Convertir les tâches Supabase au format attendu par l'app
-      const convertedTasks = response.tasks.map((task: any) => ({
-        id: task.id,
-        nom: task.titre,
-        description: task.description || '',
-        etat: task.statut || 'todo',
-        priorite: task.priorite || 'medium',
-        date_debut: task.date_debut ? new Date(task.date_debut) : undefined,
-        date_fin: task.date_fin ? new Date(task.date_fin) : undefined,
-        utilisateurs: task.assigned_user ? [task.assigned_user] : [],
-        commentaires: [],
-        history: [],
-        attachments: []
-      }));
+      console.log('📊 Réponse API getTasks:', response);
+      console.log('📊 Nombre tâches reçues:', response.tasks?.length || 0);
 
-      console.log('✅ Tâches chargées:', convertedTasks.length);
+      // Convertir les tâches Supabase au format attendu par l'app
+      const convertedTasks = response.tasks.map((task: any) => {
+        console.log('🔄 Conversion tâche:', task.titre, 'ID:', task.id);
+        return {
+          id: task.id,
+          nom: task.titre,
+          description: task.description || '',
+          etat: task.statut || 'todo',
+          priorite: task.priorite || 'medium',
+          date_debut: task.date_debut ? new Date(task.date_debut) : undefined,
+          date_fin: task.date_fin ? new Date(task.date_fin) : undefined,
+          utilisateurs: task.assigned_user ? [task.assigned_user] : [],
+          commentaires: [],
+          history: [],
+          attachments: []
+        };
+      });
+
+      console.log('✅ Tâches converties:', convertedTasks.length);
+      console.log('📋 Détails tâches converties:', convertedTasks);
 
       // Mettre à jour le projet avec les tâches chargées
       const updatedProject = {
@@ -209,7 +216,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         taches: convertedTasks
       };
 
+      console.log('🔄 Mise à jour projet avec', convertedTasks.length, 'tâches');
       onUpdateProject(updatedProject);
+      console.log('✅ Projet mis à jour');
 
     } catch (error) {
       console.error('❌ Erreur lors du chargement des tâches:', error);
@@ -265,7 +274,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       onUpdateProject(updatedProject);
 
       // Recharger les tâches depuis l'API pour s'assurer de la synchronisation
+      console.log('🔄 Rechargement programmé des tâches dans 1 seconde...');
       setTimeout(() => {
+        console.log('🔄 Exécution du rechargement des tâches...');
         loadTasks();
       }, 1000);
 
