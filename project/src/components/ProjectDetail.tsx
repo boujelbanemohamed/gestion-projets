@@ -154,9 +154,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
   const filteredTasks = project.taches.filter(task => {
     // Gérer les valeurs null/undefined pour le statut
-    const taskStatus = task.etat || 'todo';
-    const matchesStatus = filterStatus === 'all' || taskStatus === filterStatus;
+    const taskStatus = task.etat || 'non_debutee';
 
+    console.log(`🔍 Filtrage tâche "${task.nom}": etat=${task.etat}, filterStatus=${filterStatus}`);
+
+    const matchesStatus = filterStatus === 'all' || taskStatus === filterStatus;
     const matchesMember = filterMember === 'all' || task.utilisateurs.some(user => user.id === filterMember);
 
     // Search by task number (index + 1) or task name
@@ -165,7 +167,10 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       taskNumber.includes(searchQuery) ||
       (task.nom && task.nom.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    return matchesStatus && matchesMember && matchesSearch;
+    const result = matchesStatus && matchesMember && matchesSearch;
+    console.log(`   → Résultat filtre: ${result} (status: ${matchesStatus}, member: ${matchesMember}, search: ${matchesSearch})`);
+
+    return result;
   });
 
   // Get current user for history tracking (in a real app, this would come from authentication)
@@ -219,28 +224,32 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           dateFin = undefined;
         }
 
-        // Normaliser les statuts invalides
-        const normalizeStatus = (status: string | null) => {
-          if (!status || status === '') return 'todo';
+        // Normaliser les statuts pour l'interface (Supabase → Frontend)
+        const normalizeStatusForUI = (status: string | null) => {
+          if (!status || status === '') return 'non_debutee';
 
-          // Mapping des anciens statuts vers les nouveaux
+          // Mapping Supabase → Interface Frontend (CORRIGÉ)
           const statusMap: { [key: string]: string } = {
-            'non_debutee': 'todo',
-            'cloturee': 'termine',
+            'todo': 'non_debutee',        // 12 tâches todo → non_debutee
+            'en_cours': 'en_cours',       // 1 tâche en_cours → en_cours
+            'termine': 'cloturee',        // termine → cloturee
+            'annule': 'cloturee',         // annule → cloturee
+            'completed': 'cloturee',
+            'pending': 'non_debutee',
             'in_progress': 'en_cours',
-            'cancelled': 'annule',
-            'completed': 'termine',
-            'pending': 'todo'
+            'cancelled': 'cloturee'
           };
 
-          return statusMap[status] || status;
+          const mapped = statusMap[status] || 'non_debutee';
+          console.log(`🔄 Mapping statut: ${status} → ${mapped}`);
+          return mapped;
         };
 
         const convertedTask = {
           id: task.id,
           nom: task.titre || 'Tâche sans nom',
           description: task.description || '',
-          etat: normalizeStatus(task.statut),
+          etat: normalizeStatusForUI(task.statut),
           priorite: task.priorite || 'medium',
           date_debut: dateDebut,
           date_fin: dateFin,
@@ -259,6 +268,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
       console.log('✅ Tâches converties:', convertedTasks.length);
       console.log('📋 Détails tâches converties:', convertedTasks);
 
+      // Vérifier les statuts après conversion
+      const statusCount = {};
+      convertedTasks.forEach(task => {
+        statusCount[task.etat] = (statusCount[task.etat] || 0) + 1;
+      });
+      console.log('📊 Répartition statuts après conversion:', statusCount);
+
       // Mettre à jour le projet avec les tâches chargées
       const updatedProject = {
         ...project,
@@ -267,7 +283,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
       console.log('🔄 Mise à jour projet avec', convertedTasks.length, 'tâches');
       onUpdateProject(updatedProject);
-      console.log('✅ Projet mis à jour');
+      console.log('✅ Projet mis à jour avec tâches:', updatedProject.taches.length);
 
     } catch (error) {
       console.error('❌ Erreur lors du chargement des tâches:', error);
@@ -293,11 +309,21 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         date_fin: taskData.date_fin
       });
 
+      // Mapping Interface → Supabase
+      const mapStatusToSupabase = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+          'non_debutee': 'todo',
+          'en_cours': 'en_cours',
+          'cloturee': 'termine'
+        };
+        return statusMap[status] || 'todo';
+      };
+
       const createdTask = await api.createTask({
         titre: taskData.nom,
         description: taskData.description,
-        statut: taskData.etat || 'todo', // Valeur par défaut si vide
-        priorite: taskData.priorite || 'medium', // Valeur par défaut si vide
+        statut: mapStatusToSupabase(taskData.etat || 'non_debutee'),
+        priorite: taskData.priorite || 'medium',
         date_debut: taskData.date_debut && !isNaN(taskData.date_debut.getTime()) ? taskData.date_debut.toISOString().split('T')[0] : null,
         date_fin: taskData.date_fin && !isNaN(taskData.date_fin.getTime()) ? taskData.date_fin.toISOString().split('T')[0] : null,
         project_id: project.id,
@@ -336,7 +362,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
         id: createdTask.id,
         nom: createdTask.titre,
         description: createdTask.description,
-        etat: createdTask.statut,
+        etat: normalizeStatusForUI(createdTask.statut), // CORRECTION: Utiliser le mapping
         priorite: createdTask.priorite,
         date_debut: dateDebut,
         date_fin: dateFin,
@@ -377,11 +403,21 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     try {
       console.log('🔄 Modification tâche via API:', editingTask.id, taskData);
 
+      // Mapping Interface → Supabase pour modification
+      const mapStatusToSupabase = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+          'non_debutee': 'todo',
+          'en_cours': 'en_cours',
+          'cloturee': 'termine'
+        };
+        return statusMap[status] || 'todo';
+      };
+
       // Appeler l'API pour modifier la tâche
       await api.updateTask(editingTask.id, {
         titre: taskData.nom,
         description: taskData.description,
-        statut: taskData.etat,
+        statut: mapStatusToSupabase(taskData.etat),
         priorite: taskData.priorite,
         date_debut: taskData.date_debut && !isNaN(taskData.date_debut.getTime()) ? taskData.date_debut.toISOString().split('T')[0] : null,
         date_fin: taskData.date_fin && !isNaN(taskData.date_fin.getTime()) ? taskData.date_fin.toISOString().split('T')[0] : null,
