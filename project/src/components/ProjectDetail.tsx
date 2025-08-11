@@ -188,14 +188,23 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
     };
   };
 
-  // Charger les tâches depuis l'API
+  // CORRECTION FINALE: Charger les tâches depuis l'API
   const loadTasks = async () => {
     try {
-      console.log('📝 Chargement tâches depuis API pour projet:', project.id);
+      console.log('🚀 CORRECTION FINALE: Chargement tâches depuis API pour projet:', project.id);
       const response = await api.getTasks(project.id);
 
-      console.log('📊 Réponse API getTasks:', response);
-      console.log('📊 Nombre tâches reçues:', response.tasks?.length || 0);
+      console.log('📊 RÉPONSE API COMPLÈTE:', response);
+      console.log('📊 NOMBRE TÂCHES REÇUES:', response.tasks?.length || 0);
+
+      if (response.tasks && response.tasks.length > 0) {
+        console.log('✅ TÂCHES TROUVÉES EN API !');
+        response.tasks.forEach((task, index) => {
+          console.log(`   ${index + 1}. ${task.titre} - Statut: ${task.statut}`);
+        });
+      } else {
+        console.log('❌ AUCUNE TÂCHE REÇUE DE L\'API');
+      }
 
       // Convertir les tâches Supabase au format attendu par l'app
       const convertedTasks = response.tasks.map((task: any) => {
@@ -224,14 +233,17 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           dateFin = undefined;
         }
 
-        // Normaliser les statuts pour l'interface (Supabase → Frontend)
+        // CORRECTION FINALE: Normaliser les statuts pour l'interface (Supabase → Frontend)
         const normalizeStatusForUI = (status: string | null) => {
-          if (!status || status === '') return 'non_debutee';
+          if (!status || status === '') {
+            console.log(`🔄 Mapping statut: ${status} → non_debutee (défaut)`);
+            return 'non_debutee';
+          }
 
-          // Mapping Supabase → Interface Frontend (CORRIGÉ)
+          // Mapping Supabase → Interface Frontend (DÉFINITIF)
           const statusMap: { [key: string]: string } = {
-            'todo': 'non_debutee',        // 12 tâches todo → non_debutee
-            'en_cours': 'en_cours',       // 1 tâche en_cours → en_cours
+            'todo': 'non_debutee',        // ESSENTIEL: todo → non_debutee
+            'en_cours': 'en_cours',       // en_cours → en_cours
             'termine': 'cloturee',        // termine → cloturee
             'annule': 'cloturee',         // annule → cloturee
             'completed': 'cloturee',
@@ -241,7 +253,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
           };
 
           const mapped = statusMap[status] || 'non_debutee';
-          console.log(`🔄 Mapping statut: ${status} → ${mapped}`);
+          console.log(`🔄 MAPPING FINAL: ${status} → ${mapped}`);
           return mapped;
         };
 
