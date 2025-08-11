@@ -118,6 +118,15 @@ const Dashboard: React.FC<DashboardProps> = ({
       console.log('📊 Dashboard: Tâches groupées par projet:', Object.keys(tasksByProject).length, 'projets');
 
       // Mettre à jour chaque projet avec ses tâches
+      // Si projects est vide, on ne peut pas mettre à jour, mais on peut quand même notifier
+      if (projects.length === 0) {
+        console.log('⚠️ Dashboard: Aucun projet à mettre à jour');
+        updateProgress(100, 'Aucun projet trouvé');
+        finishLoading();
+        showToast('Aucun projet trouvé. Créez votre premier projet !', 'info', 4000);
+        return;
+      }
+
       const updatedProjects = projects.map(project => {
         const projectTasks = tasksByProject[project.id] || [];
         console.log(`🔄 Dashboard: Projet ${project.nom} - ${projectTasks.length} tâches`);
@@ -152,15 +161,35 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, []); // SUPPRESSION DES DÉPENDANCES pour éviter la boucle infinie
 
-  // Chargement initial des tâches au montage du Dashboard UNIQUEMENT
+  // Chargement initial des tâches au montage du Dashboard
   useEffect(() => {
     console.log('🎯 Dashboard: Montage - Chargement initial des tâches');
-    if (projects.length > 0 && !hasInitialLoaded && !isLoadingTasks) {
+    console.log('📊 État:', {
+      projectsLength: projects.length,
+      hasInitialLoaded,
+      isLoadingTasks
+    });
+
+    // Charger même si projects.length = 0 (projets peuvent être vides mais exister)
+    if (!hasInitialLoaded && !isLoadingTasks) {
       console.log('✅ Conditions remplies pour chargement initial');
       setHasInitialLoaded(true);
       loadAllProjectTasks();
     }
   }, [projects.length, hasInitialLoaded, isLoadingTasks]); // Dépendances contrôlées
+
+  // Chargement de secours si rien ne se passe après 2 secondes
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      if (!hasInitialLoaded && !isLoadingTasks) {
+        console.log('🔄 Chargement de secours déclenché');
+        setHasInitialLoaded(true);
+        loadAllProjectTasks();
+      }
+    }, 2000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, []); // Une seule fois au montage
 
   const filteredAndSortedProjects = projects
     .filter(project => {
