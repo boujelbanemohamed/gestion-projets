@@ -622,6 +622,41 @@ class SupabaseApiService {
     };
   }
 
+  // Charger tous les utilisateurs (pour la synchronisation)
+  async getAllUsers(): Promise<{ users: any[] }> {
+    console.log('🔍 Chargement de tous les utilisateurs depuis Supabase...');
+
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        *,
+        departments(nom)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Erreur chargement utilisateurs:', error);
+      throw new Error(error.message);
+    }
+
+    console.log('✅ Utilisateurs chargés:', data?.length || 0);
+
+    const users = (data || []).map(user => ({
+      id: user.id,
+      email: user.email,
+      nom: user.nom,
+      prenom: user.prenom,
+      role: user.role,
+      fonction: user.fonction,
+      departement_id: user.departement_id,
+      departement: user.departments?.nom || 'Non assigné',
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    }));
+
+    return { users };
+  }
+
   // Subscriptions temps réel
   subscribeToNotifications(userId: string, callback: (notification: any) => void) {
     return supabase

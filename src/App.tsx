@@ -4,6 +4,8 @@ import { mockProjects, mockUsers, mockDepartments } from './data/mockData';
 import { AuthService } from './utils/auth';
 import { PermissionService } from './utils/permissions';
 import { useApi } from './hooks/useApi';
+import { supabase } from './lib/supabase';
+import { supabaseApiService } from './services/supabaseApi';
 import Dashboard from './components/Dashboard';
 import ProjectDetail from './components/ProjectDetail';
 import MembersManagement from './components/MembersManagement';
@@ -43,25 +45,46 @@ function App() {
   const loadUsers = async () => {
     try {
       setIsLoadingUsers(true);
-      const response = await api.getUsers();
+      
+      if (useSupabase) {
+        console.log('🔄 Chargement des utilisateurs depuis Supabase...');
+        const response = await supabaseApiService.getAllUsers();
 
-      // Convertir les utilisateurs Supabase au format attendu par l'app
-      const convertedUsers = response.users.map(user => ({
-        id: user.id,
-        nom: user.nom,
-        prenom: user.prenom,
-        fonction: user.fonction || '',
-        departement: user.departement || 'Non assigné',
-        email: user.email,
-        role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR',
-        assigned_projects: user.assigned_projects || [],
-        created_at: new Date(user.created_at || Date.now())
-      }));
+        // Convertir les utilisateurs Supabase au format attendu par l'app
+        const convertedUsers = response.users.map(user => ({
+          id: user.id,
+          nom: user.nom,
+          prenom: user.prenom,
+          fonction: user.fonction || '',
+          departement: user.departement || 'Non assigné',
+          email: user.email,
+          role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR',
+          assigned_projects: [], // Sera géré via une table de liaison
+          created_at: new Date(user.created_at || Date.now())
+        }));
 
-      setUsers(convertedUsers);
+        console.log('✅ Utilisateurs chargés depuis Supabase:', convertedUsers.length);
+        setUsers(convertedUsers);
+      } else {
+        // Utiliser l'API locale
+        const response = await api.getUsers();
+        const convertedUsers = response.users.map(user => ({
+          id: user.id,
+          nom: user.nom,
+          prenom: user.prenom,
+          fonction: user.fonction || '',
+          departement: user.departement || 'Non assigné',
+          email: user.email,
+          role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR',
+          assigned_projects: user.assigned_projects || [],
+          created_at: new Date(user.created_at || Date.now())
+        }));
+        setUsers(convertedUsers);
+      }
     } catch (error) {
-      console.error('Erreur lors du chargement des utilisateurs:', error);
+      console.error('❌ Erreur lors du chargement des utilisateurs:', error);
       // En cas d'erreur, garder les données mockées
+      setUsers(mockUsers);
     } finally {
       setIsLoadingUsers(false);
     }
@@ -261,21 +284,54 @@ function App() {
     setCurrentView('project');
   };
 
-  const handleCreateMember = (memberData: Omit<User, 'id' | 'created_at'>) => {
+  const handleCreateMember = async (memberData: Omit<User, 'id' | 'created_at'>) => {
     if (!PermissionService.hasPermission(currentUser, 'members', 'create')) {
       alert('Vous n\'avez pas les permissions pour créer un membre');
       return;
     }
 
-    const newMember: User = {
-      ...memberData,
-      id: Date.now().toString(),
-      created_at: new Date()
-    };
-    setUsers(prev => [...prev, newMember]);
+    try {
+      console.log('👤 Création d\'un nouveau membre:', memberData.email);
+      
+      // Vérifier si l'utilisateur existe déjà dans Supabase Auth
+      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(memberData.email);
+      
+      if (existingUser.user) {
+        alert('Un utilisateur avec cet email existe déjà dans le système d\'authentification');
+        return;
+      }
+
+      // Créer l'utilisateur dans Supabase Auth ET dans la table custom users
+      const { user, token } = await supabaseApiService.createUser({
+        email: memberData.email,
+        password: memberData.mot_de_passe || 'password123', // Mot de passe temporaire
+        nom: memberData.nom,
+        prenom: memberData.prenom,
+        role: memberData.role as any,
+        fonction: memberData.fonction,
+        departement_id: undefined, // Sera géré via la relation departement
+      });
+
+      console.log('✅ Membre créé avec succès dans Supabase:', user);
+
+      // Ajouter à la liste locale
+      const newMember: User = {
+        ...memberData,
+        id: user.id,
+        created_at: new Date()
+      };
+      setUsers(prev => [...prev, newMember]);
+
+      // Envoyer un email de bienvenue avec les identifiants (optionnel)
+      console.log('📧 Envoi d\'un email de bienvenue à:', memberData.email);
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la création du membre:', error);
+      alert(`Erreur lors de la création du membre: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
   };
 
-  const handleUpdateMember = (id: string, memberData: Omit<User, 'id' | 'created_at'>) => {
+  const handleUpdateMember = async (id: string, memberData: Omit<User, 'id' | 'created_at'>) => {
     if (!PermissionService.hasPermission(currentUser, 'members', 'edit')) {
       alert('Vous n\'avez pas les permissions pour modifier ce membre');
       return;
@@ -287,21 +343,62 @@ function App() {
       return;
     }
 
-    setUsers(prev => 
-      prev.map(user => 
-        user.id === id ? { ...memberData, id, created_at: user.created_at } : user
-      )
-    );
+    try {
+      console.log('🔄 Mise à jour du membre:', id);
+      
+      // Mettre à jour dans la table custom users
+      const { error } = await supabase
+        .from('users')
+        .update({
+          nom: memberData.nom,
+          prenom: memberData.prenom,
+          email: memberData.email,
+          role: memberData.role,
+          fonction: memberData.fonction,
+          departement_id: undefined, // Sera géré via la relation departement
+        })
+        .eq('id', id);
 
-    // Update current user if they modified their own profile
-    if (currentUser && currentUser.id === id) {
-      const updatedCurrentUser = { ...currentUser, ...memberData };
-      setCurrentUser(updatedCurrentUser);
-      AuthService.updateProfile(updatedCurrentUser);
+      if (error) {
+        console.error('❌ Erreur mise à jour Supabase:', error);
+        throw new Error(error.message);
+      }
+
+      // Mettre à jour le mot de passe si fourni
+      if (memberData.mot_de_passe) {
+        console.log('🔐 Mise à jour du mot de passe pour:', memberData.email);
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
+          password: memberData.mot_de_passe
+        });
+        
+        if (passwordError) {
+          console.warn('⚠️ Erreur mise à jour mot de passe:', passwordError);
+        }
+      }
+
+      console.log('✅ Membre mis à jour avec succès');
+
+      // Mettre à jour la liste locale
+      setUsers(prev => 
+        prev.map(user => 
+          user.id === id ? { ...memberData, id, created_at: user.created_at } : user
+        )
+      );
+
+      // Update current user if they modified their own profile
+      if (currentUser && currentUser.id === id) {
+        const updatedCurrentUser = { ...currentUser, ...memberData };
+        setCurrentUser(updatedCurrentUser);
+        AuthService.updateProfile(updatedCurrentUser);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la mise à jour du membre:', error);
+      alert(`Erreur lors de la mise à jour du membre: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 
-  const handleDeleteMember = (id: string) => {
+  const handleDeleteMember = async (id: string) => {
     if (!PermissionService.hasPermission(currentUser, 'members', 'delete')) {
       alert('Vous n\'avez pas les permissions pour supprimer ce membre');
       return;
@@ -313,19 +410,53 @@ function App() {
       return;
     }
 
-    setUsers(prev => prev.filter(user => user.id !== id));
-    
-    // Remove member from all tasks
-    setProjects(prev => 
-      prev.map(project => ({
-        ...project,
-        taches: project.taches.map(task => ({
-          ...task,
-          utilisateurs: task.utilisateurs.filter(user => user.id !== id)
-        })),
-        updated_at: new Date()
-      }))
-    );
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce membre ? Cette action supprimera également son compte d\'authentification.')) {
+      try {
+        console.log('🗑️ Suppression du membre:', id);
+        
+        // Supprimer de la table custom users
+        const { error: deleteError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', id);
+
+        if (deleteError) {
+          console.error('❌ Erreur suppression Supabase:', deleteError);
+          throw new Error(deleteError.message);
+        }
+
+        // Supprimer de Supabase Auth (optionnel, peut être désactivé)
+        try {
+          const { error: authDeleteError } = await supabase.auth.admin.deleteUser(id);
+          if (authDeleteError) {
+            console.warn('⚠️ Erreur suppression auth (peut être normal):', authDeleteError);
+          }
+        } catch (authError) {
+          console.warn('⚠️ Impossible de supprimer de auth (peut être normal):', authError);
+        }
+
+        console.log('✅ Membre supprimé avec succès');
+
+        // Mettre à jour la liste locale
+        setUsers(prev => prev.filter(user => user.id !== id));
+        
+        // Remove member from all tasks
+        setProjects(prev => 
+          prev.map(project => ({
+            ...project,
+            taches: project.taches.map(task => ({
+              ...task,
+              utilisateurs: task.utilisateurs.filter(user => user.id !== id)
+            })),
+            updated_at: new Date()
+          }))
+        );
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression du membre:', error);
+        alert(`Erreur lors de la suppression du membre: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      }
+    }
   };
 
   const handleUpdatePermissions = (memberId: string, permissions: Record<string, boolean>) => {
