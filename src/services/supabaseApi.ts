@@ -6,15 +6,22 @@ type Tables = Database['public']['Tables']
 class SupabaseApiService {
   // Authentification
   async login(email: string, password: string): Promise<{ user: AuthUser; token: string }> {
+    console.log('🔐 Tentative de connexion avec:', email)
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
-    if (error) throw new Error(error.message)
+    if (error) {
+      console.error('❌ Erreur auth Supabase:', error)
+      throw new Error(error.message)
+    }
     if (!data.user) throw new Error('Aucun utilisateur trouvé')
 
-    // Récupérer/initialiser le profil utilisateur (évite l'erreur 406 "Cannot coerce ... single JSON object")
+    console.log('✅ Authentification réussie, user ID:', data.user.id)
+
+    // Vérifier si le profil existe dans la table custom users
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
@@ -24,7 +31,9 @@ class SupabaseApiService {
     let profile = userData
 
     if (!profile) {
-      // Tenter une création automatique du profil (peut échouer si la policy INSERT n'est pas activée)
+      console.log('⚠️ Profil non trouvé dans users, création automatique...')
+      
+      // Créer automatiquement le profil dans la table custom users
       const displayName: string = (data.user.user_metadata?.full_name as string) || ''
       const [maybePrenom = '', maybeNom = ''] = displayName.split(' ')
       const insertPayload: Partial<Tables['users']['Insert']> = {
@@ -34,16 +43,21 @@ class SupabaseApiService {
         nom: maybeNom || 'Supabase',
         role: 'USER',
       }
+      
+      console.log('📝 Tentative d\'insertion du profil:', insertPayload)
+      
       const { data: created, error: insertError } = await supabase
         .from('users')
         .insert(insertPayload)
         .select('*')
         .maybeSingle()
+        
       if (!insertError && created) {
+        console.log('✅ Profil créé avec succès')
         profile = created
       } else {
-        // Si on ne peut pas créer le profil, on continue avec un fallback minimal
-        console.warn('Profile auto-creation failed or policies prevent insert:', insertError?.message)
+        console.warn('⚠️ Échec création profil (policies RLS probablement):', insertError?.message)
+        // Fallback: utiliser les données auth.users directement
         profile = {
           id: data.user.id as string,
           email: data.user.email as string,
@@ -56,21 +70,104 @@ class SupabaseApiService {
           updated_at: new Date().toISOString(),
         } as unknown as Tables['users']['Row']
       }
+    } else {
+      console.log('✅ Profil trouvé dans users')
     }
 
     if (userError && !profile) throw new Error(userError.message)
 
+    const authUser: AuthUser = {
+      id: profile.id as string,
+      email: profile.email as string,
+      nom: (profile as any).nom || '',
+      prenom: (profile as any).prenom || '',
+      role: ((profile as any).role || 'USER') as AuthUser['role'],
+      fonction: (profile as any).fonction || undefined,
+      departement_id: (profile as any).departement_id || undefined,
+    }
+
+    console.log('👤 Utilisateur final:', authUser)
+
     return {
-      user: {
-        id: profile.id as string,
-        email: profile.email as string,
-        nom: (profile as any).nom || '',
-        prenom: (profile as any).prenom || '',
-        role: ((profile as any).role || 'USER') as AuthUser['role'],
-        fonction: (profile as any).fonction || undefined,
-        departement_id: (profile as any).departement_id || undefined,
-      },
+      user: authUser,
       token: data.session?.access_token || '',
+    }
+  }
+
+  // Créer un utilisateur dans auth.users ET dans la table custom users
+  async createUser(userData: {
+    email: string
+    password: string
+    nom: string
+    prenom: string
+    role?: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'
+    fonction?: string
+    departement_id?: number
+  }): Promise<{ user: AuthUser; token: string }> {
+    console.log('👤 Création d\'un nouvel utilisateur:', userData.email)
+
+    // 1. Créer l'utilisateur dans auth.users
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: {
+          full_name: `${userData.prenom} ${userData.nom}`,
+          nom: userData.nom,
+          prenom: userData.prenom,
+        }
+      }
+    })
+
+    if (authError) {
+      console.error('❌ Erreur création auth.users:', authError)
+      throw new Error(authError.message)
+    }
+
+    if (!authData.user) {
+      throw new Error('Échec de la création de l\'utilisateur')
+    }
+
+    console.log('✅ Utilisateur créé dans auth.users, ID:', authData.user.id)
+
+    // 2. Créer le profil dans la table custom users
+    const profilePayload: Tables['users']['Insert'] = {
+      id: authData.user.id,
+      email: userData.email,
+      nom: userData.nom,
+      prenom: userData.prenom,
+      role: userData.role || 'USER',
+      fonction: userData.fonction,
+      departement_id: userData.departement_id,
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .insert(profilePayload)
+      .select('*')
+      .single()
+
+    if (profileError) {
+      console.error('❌ Erreur création profil users:', profileError)
+      // On continue même si le profil échoue, on utilisera auth.users
+    }
+
+    console.log('✅ Profil créé dans users:', profile)
+
+    // 3. Retourner l'utilisateur
+    const authUser: AuthUser = {
+      id: authData.user.id,
+      email: userData.email,
+      nom: userData.nom,
+      prenom: userData.prenom,
+      role: userData.role || 'USER',
+      fonction: userData.fonction,
+      departement_id: userData.departement_id,
+    }
+
+    return {
+      user: authUser,
+      token: authData.session?.access_token || '',
     }
   }
 
@@ -83,24 +180,32 @@ class SupabaseApiService {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
+    console.log('🔍 Récupération du profil pour user ID:', user.id)
+
     const { data: profile, error } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
       .maybeSingle()
 
-    if (error) throw new Error(error.message)
+    if (error) {
+      console.error('❌ Erreur récupération profil:', error)
+      throw new Error(error.message)
+    }
 
     if (!profile) {
-      // Fallback minimal si le profil n'existe pas encore
+      console.log('⚠️ Profil non trouvé, fallback auth.users')
+      // Fallback: utiliser les données auth.users directement
       return {
         id: user.id,
         email: user.email ?? '',
-        nom: '',
-        prenom: '',
+        nom: user.user_metadata?.full_name?.split(' ')[1] || '',
+        prenom: user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur',
         role: 'USER',
       }
     }
+
+    console.log('✅ Profil trouvé:', profile)
 
     return {
       id: profile.id as string,
