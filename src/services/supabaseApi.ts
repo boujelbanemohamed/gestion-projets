@@ -14,24 +14,61 @@ class SupabaseApiService {
     if (error) throw new Error(error.message)
     if (!data.user) throw new Error('Aucun utilisateur trouvé')
 
-    // Récupérer les informations utilisateur étendues
+    // Récupérer/initialiser le profil utilisateur (évite l'erreur 406 "Cannot coerce ... single JSON object")
     const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', data.user.id)
-      .single()
+      .maybeSingle()
 
-    if (userError) throw new Error(userError.message)
+    let profile = userData
+
+    if (!profile) {
+      // Tenter une création automatique du profil (peut échouer si la policy INSERT n'est pas activée)
+      const displayName: string = (data.user.user_metadata?.full_name as string) || ''
+      const [maybePrenom = '', maybeNom = ''] = displayName.split(' ')
+      const insertPayload: Partial<Tables['users']['Insert']> = {
+        id: data.user.id as string,
+        email: data.user.email as string,
+        prenom: maybePrenom || (data.user.email?.split('@')[0] as string) || 'Utilisateur',
+        nom: maybeNom || 'Supabase',
+        role: 'USER',
+      }
+      const { data: created, error: insertError } = await supabase
+        .from('users')
+        .insert(insertPayload)
+        .select('*')
+        .maybeSingle()
+      if (!insertError && created) {
+        profile = created
+      } else {
+        // Si on ne peut pas créer le profil, on continue avec un fallback minimal
+        console.warn('Profile auto-creation failed or policies prevent insert:', insertError?.message)
+        profile = {
+          id: data.user.id as string,
+          email: data.user.email as string,
+          prenom: insertPayload.prenom as string,
+          nom: insertPayload.nom as string,
+          role: 'USER',
+          departement_id: null,
+          fonction: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as unknown as Tables['users']['Row']
+      }
+    }
+
+    if (userError && !profile) throw new Error(userError.message)
 
     return {
       user: {
-        id: userData.id,
-        email: userData.email,
-        nom: userData.nom,
-        prenom: userData.prenom,
-        role: userData.role as AuthUser['role'],
-        fonction: userData.fonction,
-        departement_id: userData.departement_id,
+        id: profile.id as string,
+        email: profile.email as string,
+        nom: (profile as any).nom || '',
+        prenom: (profile as any).prenom || '',
+        role: ((profile as any).role || 'USER') as AuthUser['role'],
+        fonction: (profile as any).fonction || undefined,
+        departement_id: (profile as any).departement_id || undefined,
       },
       token: data.session?.access_token || '',
     }
@@ -46,22 +83,33 @@ class SupabaseApiService {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    const { data: userData, error } = await supabase
+    const { data: profile, error } = await supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (error) throw new Error(error.message)
 
+    if (!profile) {
+      // Fallback minimal si le profil n'existe pas encore
+      return {
+        id: user.id,
+        email: user.email ?? '',
+        nom: '',
+        prenom: '',
+        role: 'USER',
+      }
+    }
+
     return {
-      id: userData.id,
-      email: userData.email,
-      nom: userData.nom,
-      prenom: userData.prenom,
-      role: userData.role as AuthUser['role'],
-      fonction: userData.fonction,
-      departement_id: userData.departement_id,
+      id: profile.id as string,
+      email: (profile as any).email || '',
+      nom: (profile as any).nom || '',
+      prenom: (profile as any).prenom || '',
+      role: ((profile as any).role || 'USER') as AuthUser['role'],
+      fonction: (profile as any).fonction || undefined,
+      departement_id: (profile as any).departement_id || undefined,
     }
   }
 
