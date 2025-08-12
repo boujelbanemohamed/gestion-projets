@@ -16,7 +16,10 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, alertThreshold = DEFAULT_ALERT_THRESHOLD }) => {
   const [showActions, setShowActions] = useState(false);
-  const stats = getProjectStats(project.taches);
+
+  // Sécurisation des tâches
+  const safeTasks = project.taches || [];
+  const stats = getProjectStats(safeTasks);
 
   const handleExport = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -44,7 +47,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
     const isApproachingDeadline = isProjectApproachingDeadline(project.date_fin, alertThreshold);
     const isOverdue = isProjectOverdue(project.date_fin);
     const daysUntilDeadline = getDaysUntilDeadline(project.date_fin);
-    const showDeadlineAlert = (isApproachingDeadline || isOverdue) && project.taches.some(t => t.etat !== 'cloturee');
+    const showDeadlineAlert = (isApproachingDeadline || isOverdue) && safeTasks.some(t => t.etat !== 'cloturee');
     const alertMessage = daysUntilDeadline !== null ? getAlertMessage(daysUntilDeadline) : '';
     const alertSeverity = daysUntilDeadline !== null ? getAlertSeverity(daysUntilDeadline) : 'info';
     const alertColorClasses = getAlertColorClasses(alertSeverity);
@@ -67,11 +70,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
     return calculateBudgetSummary(project.budget_initial, project.devise, mockExpenses);
   }, [project.budget_initial, project.devise]);
 
-  // Memoized project manager lookup
+  // Memoized project manager lookup - Sécurisé
   const projectManager = useMemo(() => {
     if (!project.responsable_id) return null;
-    return project.taches.flatMap(t => t.utilisateurs).find(user => user.id === project.responsable_id) || null;
-  }, [project.responsable_id, project.taches]);
+    try {
+      return safeTasks.flatMap(t => t.utilisateurs || []).find(user => user.id === project.responsable_id) || null;
+    } catch (error) {
+      console.warn('Erreur lors de la recherche du responsable:', error);
+      return null;
+    }
+  }, [project.responsable_id, safeTasks]);
 
   return (
     <div
@@ -129,15 +137,34 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
 
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 pr-12">
-          <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
-            {project.nom}
-          </h3>
-          
-          {/* Type Projet */}
-          <div className="flex items-center space-x-2 mb-2">
-            <FileText size={16} className="text-gray-400" />
-            <span className="text-sm text-gray-600">Type: {project.type_projet || "N/A"}</span>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+              {project.nom}
+            </h3>
+            {/* Statut du projet */}
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+              project.statut === 'termine' ? 'bg-green-100 text-green-800' :
+              project.statut === 'en_cours' ? 'bg-blue-100 text-blue-800' :
+              project.statut === 'en_pause' ? 'bg-orange-100 text-orange-800' :
+              project.statut === 'annule' ? 'bg-red-100 text-red-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {project.statut === 'termine' ? 'Terminé' :
+               project.statut === 'en_cours' ? 'En cours' :
+               project.statut === 'en_pause' ? 'En pause' :
+               project.statut === 'annule' ? 'Annulé' :
+               project.statut === 'planification' ? 'Planification' :
+               project.statut || 'Non défini'}
+            </span>
           </div>
+          
+          {/* Type Projet - Sécurisé */}
+          {project.type_projet && (
+            <div className="flex items-center space-x-2 mb-2">
+              <FileText size={16} className="text-gray-400" />
+              <span className="text-sm text-gray-600">Type: {project.type_projet}</span>
+            </div>
+          )}
 
           {/* Project Manager */}
           {projectManager && (
@@ -149,13 +176,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
             </div>
           )}
           
-          {/* Budget */}
-          <div className="flex items-center space-x-2 mb-2">
-            <DollarSign size={16} className="text-gray-400" />
-            <span className="text-sm text-gray-600">
-              Budget: {project.budget_initial ? `${project.budget_initial} ${project.devise || ''}` : "N/A"}
-            </span>
-          </div>
+          {/* Budget - Sécurisé */}
+          {project.budget_initial && (
+            <div className="flex items-center space-x-2 mb-2">
+              <DollarSign size={16} className="text-gray-400" />
+              <span className="text-sm text-gray-600">
+                Budget: {project.budget_initial} {project.devise || 'EUR'}
+              </span>
+            </div>
+          )}
           
           {/* Description */}
           {project.description && (
@@ -171,7 +200,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
           {project.departement && (
             <div className="flex items-center space-x-2 mb-2">
               <Building size={16} className="text-gray-400" />
-              <span className="text-sm text-gray-600">{project.departement}</span>
+              <span className="text-sm text-gray-600">Département: {project.departement}</span>
+            </div>
+          )}
+
+          {/* Priorité si disponible */}
+          {project.priorite && (
+            <div className="flex items-center space-x-2 mb-2">
+              <AlertTriangle size={16} className={
+                project.priorite === 'high' ? 'text-red-500' :
+                project.priorite === 'medium' ? 'text-orange-500' :
+                'text-green-500'
+              } />
+              <span className="text-sm text-gray-600">
+                Priorité: {
+                  project.priorite === 'high' ? 'Haute' :
+                  project.priorite === 'medium' ? 'Moyenne' :
+                  project.priorite === 'low' ? 'Basse' :
+                  project.priorite
+                }
+              </span>
             </div>
           )}
         </div>
@@ -243,7 +291,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
           <div className="flex items-center space-x-2">
             <Users size={16} className="text-gray-400" />
             <span className="text-gray-600">
-              {new Set(project.taches.flatMap(t => t.utilisateurs.map(u => u.id))).size} membres
+              {(() => {
+                try {
+                  const uniqueMembers = new Set(
+                    safeTasks.flatMap(t => (t.utilisateurs || []).map(u => u.id))
+                  );
+                  return uniqueMembers.size;
+                } catch (error) {
+                  console.warn('Erreur calcul membres:', error);
+                  return 0;
+                }
+              })()} membres
             </span>
           </div>
         </div>
@@ -274,14 +332,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
               {project.date_debut && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Calendar size={14} className="text-green-500" />
-                  <span>Début : {project.date_debut.toLocaleDateString('fr-FR')}</span>
+                  <span>Début : {
+                    typeof project.date_debut === 'string'
+                      ? new Date(project.date_debut).toLocaleDateString('fr-FR')
+                      : project.date_debut.toLocaleDateString('fr-FR')
+                  }</span>
                 </div>
               )}
               {project.date_fin && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <Calendar size={14} className="text-red-500" />
                   <span className={alertData?.isOverdue ? 'text-red-600 font-medium' : ''}>
-                    Fin : {project.date_fin.toLocaleDateString('fr-FR')}
+                    Fin : {
+                      typeof project.date_fin === 'string'
+                        ? new Date(project.date_fin).toLocaleDateString('fr-FR')
+                        : project.date_fin.toLocaleDateString('fr-FR')
+                    }
                     {alertData?.isOverdue && ' (dépassée)'}
                   </span>
                 </div>
@@ -289,11 +355,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete, a
             </div>
           )}
           
-          {/* Date de création */}
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
-            <Calendar size={14} />
-            <span>Créé le {project.created_at.toLocaleDateString('fr-FR')}</span>
-          </div>
+          {/* Date de création - Sécurisée */}
+          {project.created_at && (
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <Calendar size={14} />
+              <span>Créé le {
+                typeof project.created_at === 'string'
+                  ? new Date(project.created_at).toLocaleDateString('fr-FR')
+                  : project.created_at.toLocaleDateString('fr-FR')
+              }</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
