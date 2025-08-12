@@ -21,9 +21,12 @@ import { useToast } from './components/Toast';
 type ViewType = 'dashboard' | 'project' | 'members' | 'departments' | 'performance' | 'closed-projects' | 'admin-settings';
 
 function App() {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
+  const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true' || localStorage.getItem('useMockData') === 'true'
+
+  const [projects, setProjects] = useState<Project[]>(useMock ? mockProjects : []);
+  const [users, setUsers] = useState<User[]>(useMock ? mockUsers : []);
+  const [departments, setDepartments] = useState<Department[]>(useMock ? mockDepartments : []);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -100,8 +103,8 @@ function App() {
 
   // Check for existing authentication on app load
   useEffect(() => {
-    // Pour Supabase, on vérifiera la session automatiquement
-    // Pour l'instant, on ouvre directement le modal de connexion
+    // Si Supabase est activé, on attend la connexion réelle
+    // sinon on ouvre le modal de connexion mock
     setIsLoginModalOpen(true);
   }, []);
 
