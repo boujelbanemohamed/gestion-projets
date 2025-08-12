@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, LogIn, Eye, EyeOff, User, Lock } from 'lucide-react';
 import { User as UserType } from '../types';
 import { useApi } from '../hooks/useApi';
+import { useToast } from './Toast';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const api = useApi();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +34,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
         onClose();
         setEmail('');
         setPassword('');
+        showToast('Connexion réussie !', 'success', 3000);
       } else {
-        setError('Email ou mot de passe incorrect');
+        const errorMsg = 'Email ou mot de passe incorrect';
+        setError(errorMsg);
+        showToast(errorMsg, 'error', 4000);
       }
     } catch (error: any) {
       console.error('Erreur de connexion:', error);
-      setError(error.message || 'Email ou mot de passe incorrect');
+      const errorMsg = error.message || 'Email ou mot de passe incorrect';
+      setError(errorMsg);
+      showToast(errorMsg, 'error', 4000);
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +178,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              Mot de passe pour tous : password123
+              Mots de passe acceptés : password123, admin, test, password, 123456
+            </p>
+            <p className="text-xs text-gray-400 mt-1 text-center">
+              Ou utilisez le prénom en minuscules (ex: marie, pierre)
             </p>
           </div>
         </form>

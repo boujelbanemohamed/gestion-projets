@@ -7,8 +7,12 @@ export class AuthService {
   static login(email: string, password: string, users: User[]): AuthUser | null {
     // In a real app, this would make an API call
     const user = users.find(u => u.email === email);
-    
-    if (user && password === 'password123') { // Mock password check
+
+    // Authentification flexible - accepte plusieurs mots de passe pour les tests
+    const validPasswords = ['password123', 'admin', '123456', 'test', 'password', user?.prenom?.toLowerCase()];
+    const isValidPassword = validPasswords.includes(password);
+
+    if (user && isValidPassword) { // Mock password check amélioré
       const authUser: AuthUser = {
         id: user.id,
         nom: user.nom,
