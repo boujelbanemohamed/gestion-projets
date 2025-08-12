@@ -16,6 +16,7 @@ import LoginModal from './components/LoginModal';
 import UserProfileModal from './components/UserProfileModal';
 import Navigation from './components/Navigation';
 import SupabaseSetupButton from './components/SupabaseSetupButton';
+import { useToast } from './components/Toast';
 
 type ViewType = 'dashboard' | 'project' | 'members' | 'departments' | 'performance' | 'closed-projects' | 'admin-settings';
 
@@ -28,6 +29,9 @@ function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Hook pour les notifications toast
+  const { showToast, ToastContainer } = useToast();
   const [unreadNotificationsCount] = useState(2); // Mock count for demo
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const api = useApi();
@@ -440,8 +444,8 @@ function App() {
     // Update the project in the projects array
     setProjects(prev => prev.map(p => p.id === project.id ? updatedProject : p));
     
-    // Show success message
-    alert(`Le projet "${project.nom}" a été réouvert avec succès.`);
+    // Notification toast dynamique au lieu d'alerte
+    showToast(`Le projet "${project.nom}" a été réouvert avec succès.`, 'success', 4000);
   };
 
   const handleNavigate = (view: ViewType) => {
@@ -601,6 +605,9 @@ function App() {
         onLogout={handleLogout}
         onProfileUpdate={handleProfileUpdate}
       />
+
+      {/* Container pour les notifications toast */}
+      <ToastContainer />
     </div>
   );
 }
