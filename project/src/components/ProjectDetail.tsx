@@ -488,11 +488,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onUpdate
 
       onUpdateProject(updatedProject);
       setEditingTask(undefined);
-      alert('Tâche modifiée avec succès !');
+
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Tâche modifiée avec succès !', 'success', 4000);
 
     } catch (error: any) {
       console.error('❌ Erreur modification tâche:', error);
-      alert(`Erreur lors de la modification : ${error.message}`);
+      showToast(`Erreur lors de la modification : ${error.message}`, 'error');
     }
   };
 

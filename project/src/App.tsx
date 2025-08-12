@@ -16,6 +16,7 @@ import LoginModal from './components/LoginModal';
 import UserProfileModal from './components/UserProfileModal';
 import Navigation from './components/Navigation';
 import SupabaseSetupButton from './components/SupabaseSetupButton';
+import { useToast } from './components/Toast';
 
 type ViewType = 'dashboard' | 'project' | 'members' | 'departments' | 'performance' | 'closed-projects' | 'admin-settings';
 
@@ -28,6 +29,9 @@ function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Hook pour les notifications toast
+  const { showToast, ToastContainer } = useToast();
   const [unreadNotificationsCount] = useState(2); // Mock count for demo
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const api = useApi();
@@ -331,15 +335,15 @@ function App() {
         return updatedProjects;
       });
 
-      // Notification de succès
-      alert('Projet créé avec succès !');
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Projet créé avec succès !', 'success', 4000);
 
       // PAS de rechargement - laisser React gérer l'état
       console.log('✅ Projet ajouté sans rechargement - React gère l\'affichage');
 
     } catch (error: any) {
       console.error('❌ Erreur création projet:', error);
-      alert(`Erreur lors de la création : ${error.message}`);
+      showToast(`Erreur lors de la création : ${error.message}`, 'error');
     }
   };
 
@@ -374,11 +378,12 @@ function App() {
       );
       setSelectedProject(updatedProject);
 
-      alert('Projet modifié avec succès !');
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Projet modifié avec succès !', 'success', 4000);
 
     } catch (error: any) {
       console.error('❌ Erreur modification projet:', error);
-      alert(`Erreur lors de la modification : ${error.message}`);
+      showToast(`Erreur lors de la modification : ${error.message}`, 'error');
     }
   };
 
@@ -489,12 +494,12 @@ function App() {
 
       setUsers(prev => [...prev, newMember]);
 
-      // Notification de succès
-      alert('Utilisateur créé avec succès !');
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Utilisateur créé avec succès !', 'success', 4000);
 
     } catch (error: any) {
       console.error('❌ Erreur création utilisateur:', error);
-      alert(`Erreur lors de la création : ${error.message}`);
+      showToast(`Erreur lors de la création : ${error.message}`, 'error');
     }
   };
 
@@ -548,11 +553,12 @@ function App() {
         AuthService.updateProfile(updatedCurrentUser);
       }
 
-      alert('Utilisateur modifié avec succès !');
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Utilisateur modifié avec succès !', 'success', 4000);
 
     } catch (error: any) {
       console.error('❌ Erreur modification utilisateur:', error);
-      alert(`Erreur lors de la modification : ${error.message}`);
+      showToast(`Erreur lors de la modification : ${error.message}`, 'error');
     }
   };
 
@@ -677,12 +683,12 @@ function App() {
 
       setDepartments(prev => [...prev, newDepartment]);
 
-      // Notification de succès
-      alert('Département créé avec succès !');
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Département créé avec succès !', 'success', 4000);
 
     } catch (error: any) {
       console.error('❌ Erreur création département:', error);
-      alert(`Erreur lors de la création : ${error.message}`);
+      showToast(`Erreur lors de la création : ${error.message}`, 'error');
     }
   };
 
@@ -732,11 +738,12 @@ function App() {
         );
       }
 
-      alert('Département modifié avec succès !');
+      // Notification toast dynamique au lieu d'alerte
+      showToast('Département modifié avec succès !', 'success', 4000);
 
     } catch (error: any) {
       console.error('❌ Erreur modification département:', error);
-      alert(`Erreur lors de la modification : ${error.message}`);
+      showToast(`Erreur lors de la modification : ${error.message}`, 'error');
     }
   };
 
@@ -975,6 +982,9 @@ function App() {
         onLogout={handleLogout}
         onProfileUpdate={handleProfileUpdate}
       />
+
+      {/* Container pour les notifications toast */}
+      <ToastContainer />
     </div>
   );
 }
