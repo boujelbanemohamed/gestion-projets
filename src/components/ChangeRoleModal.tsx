@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X, Shield, Crown, UserCheck, AlertTriangle } from 'lucide-react';
+import { X, Shield, Crown, UserCheck, AlertTriangle, Users } from 'lucide-react';
 import { User, AuthUser } from '../types';
 
 interface ChangeRoleModalProps {
   isOpen: boolean;
   onClose: () => void;
   member?: User;
-  onConfirm: (newRole: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR') => void;
+  onConfirm: (newRole: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER') => void;
   currentUser: AuthUser;
 }
 
@@ -16,7 +16,7 @@ const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
   member,
   onConfirm
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR'>('UTILISATEUR');
+  const [selectedRole, setSelectedRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'>('USER');
 
   React.useEffect(() => {
     if (member) {
@@ -58,7 +58,22 @@ const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
       ]
     },
     {
-      value: 'UTILISATEUR' as const,
+      value: 'MANAGER' as const,
+      label: 'Manager',
+      icon: Users,
+      color: 'orange',
+      description: 'Accès étendu aux projets et équipes',
+      permissions: [
+        'Tableau de bord étendu',
+        'Gestion des projets assignés',
+        'Gestion des équipes de projet',
+        'Création et modification de tâches',
+        'Gestion des commentaires et fichiers',
+        '❌ Pas d\'accès aux pages Performance/Membres/Départements'
+      ]
+    },
+    {
+      value: 'USER' as const,
       label: 'Utilisateur',
       icon: UserCheck,
       color: 'green',
@@ -81,6 +96,8 @@ const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
         return `${baseClasses} ${isSelected ? 'ring-purple-500 bg-purple-50 border-purple-200' : 'border-gray-200 hover:border-purple-300'}`;
       case 'blue':
         return `${baseClasses} ${isSelected ? 'ring-blue-500 bg-blue-50 border-blue-200' : 'border-gray-200 hover:border-blue-300'}`;
+      case 'orange':
+        return `${baseClasses} ${isSelected ? 'ring-orange-500 bg-orange-50 border-orange-200' : 'border-gray-200 hover:border-orange-300'}`;
       case 'green':
         return `${baseClasses} ${isSelected ? 'ring-green-500 bg-green-50 border-green-200' : 'border-gray-200 hover:border-green-300'}`;
       default:
@@ -92,6 +109,7 @@ const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
     switch (color) {
       case 'purple': return 'text-purple-600';
       case 'blue': return 'text-blue-600';
+      case 'orange': return 'text-orange-600';
       case 'green': return 'text-green-600';
       default: return 'text-gray-600';
     }
@@ -179,7 +197,12 @@ const ChangeRoleModal: React.FC<ChangeRoleModalProps> = ({
                     className={`cursor-pointer border-2 rounded-xl p-6 transition-all duration-200 ${getColorClasses(role.color, isSelected)}`}
                   >
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className={`p-2 ${role.color === 'purple' ? 'bg-purple-100' : role.color === 'blue' ? 'bg-blue-100' : 'bg-green-100'} rounded-lg`}>
+                      <div className={`p-2 ${
+                        role.color === 'purple' ? 'bg-purple-100' : 
+                        role.color === 'blue' ? 'bg-blue-100' : 
+                        role.color === 'orange' ? 'bg-orange-100' :
+                        'bg-green-100'
+                      } rounded-lg`}>
                         <IconComponent className={getIconColorClass(role.color)} size={24} />
                       </div>
                       <div>

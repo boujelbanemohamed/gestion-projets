@@ -78,7 +78,7 @@ export const ROLE_PERMISSIONS: RolePermissions[] = [
     ]
   },
   {
-    role: 'UTILISATEUR',
+    role: 'USER',
     permissions: [
       { resource: 'dashboard', action: 'view', allowed: true },
       { resource: 'performance', action: 'view', allowed: false },
@@ -193,7 +193,7 @@ export class PermissionService {
     
     // Admin can manage regular users but not other admins or super admins
     if (currentUser.role === 'ADMIN') {
-      return targetUser.role === 'UTILISATEUR';
+      return targetUser.role === 'USER';
     }
     
     // Regular users can't manage anyone
@@ -216,18 +216,18 @@ export class PermissionService {
 
     // Admin can assign projects to regular users
     if (currentUser.role === 'ADMIN') {
-      return targetMember.role === 'UTILISATEUR';
+      return targetMember.role === 'USER';
     }
 
     // Regular users can only assign projects they manage
-    if (currentUser.role === 'UTILISATEUR') {
+    if (currentUser.role === 'USER') {
       // Check if the current user is a project manager for any of the projects
       const managedProjects = projects.filter(project =>
         project.responsable_id === currentUser.id
       );
 
       // Can only assign if they manage at least one project and target is a regular user
-      return managedProjects.length > 0 && targetMember.role === 'UTILISATEUR';
+      return managedProjects.length > 0 && targetMember.role === 'USER';
     }
 
     return false;
@@ -245,7 +245,7 @@ export class PermissionService {
     }
 
     // Regular users can only assign projects they manage
-    if (currentUser.role === 'UTILISATEUR') {
+    if (currentUser.role === 'USER') {
       return allProjects.filter(project => project.responsable_id === currentUser.id);
     }
 

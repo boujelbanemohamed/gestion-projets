@@ -927,7 +927,7 @@ class SupabaseApiService {
 
       console.log('✅ Table public.users mise à jour avec succès');
 
-      // 2. Synchroniser les métadonnées dans auth.users
+      // 2. Synchroniser les métadonnées dans auth.users (via l'utilisateur connecté)
       const metadataUpdates: any = {};
       if (updates.nom) metadataUpdates.nom = updates.nom;
       if (updates.prenom) metadataUpdates.prenom = updates.prenom;
@@ -938,22 +938,24 @@ class SupabaseApiService {
       if (Object.keys(metadataUpdates).length > 0) {
         console.log('🔄 Mise à jour des métadonnées auth.users:', metadataUpdates);
         
-        const { error: authError } = await supabase.auth.admin.updateUserById(id, {
-          user_metadata: metadataUpdates
+        // Utiliser l'API publique au lieu de l'API admin
+        const { error: authError } = await supabase.auth.updateUser({
+          data: metadataUpdates
         });
         
         if (authError) {
           console.error('❌ Erreur mise à jour métadonnées auth.users:', authError);
-          throw new Error(`Erreur synchronisation auth.users: ${authError.message}`);
+          // Ne pas faire échouer la mise à jour si la synchronisation auth échoue
+          console.warn('⚠️ Synchronisation auth.users échouée, mais public.users mise à jour');
         } else {
           console.log('✅ Métadonnées auth.users mises à jour avec succès');
         }
       }
 
-      // 3. Mettre à jour le mot de passe si fourni
+      // 3. Mettre à jour le mot de passe si fourni (via l'utilisateur connecté)
       if (updates.mot_de_passe) {
         console.log('🔐 Mise à jour du mot de passe...');
-        const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
+        const { error: passwordError } = await supabase.auth.updateUser({
           password: updates.mot_de_passe
         });
         

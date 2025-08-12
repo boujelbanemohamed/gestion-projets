@@ -23,7 +23,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
   member,
   onUpdatePermissions,
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR'>('UTILISATEUR');
+  const [selectedRole, setSelectedRole] = useState<'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'>('USER');
   const [customPermissions, setCustomPermissions] = useState<Permission[]>([]);
   const [isCustomMode, setIsCustomMode] = useState(false);
 
@@ -38,7 +38,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
     }
   }, [member]);
 
-  const handleRoleChange = (role: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR') => {
+  const handleRoleChange = (role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER') => {
     setSelectedRole(role);
     setIsCustomMode(false);
     
@@ -151,7 +151,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Rôle principal</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(['SUPER_ADMIN', 'ADMIN', 'UTILISATEUR'] as const).map((role) => (
+              {(['SUPER_ADMIN', 'ADMIN', 'USER'] as const).map((role) => (
                 <button
                   key={role}
                   onClick={() => handleRoleChange(role)}
@@ -167,14 +167,14 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
                     }`}>
                       {role === 'SUPER_ADMIN' && <span className="text-lg">👑</span>}
                       {role === 'ADMIN' && <span className="text-lg">🛡️</span>}
-                      {role === 'UTILISATEUR' && <span className="text-lg">👤</span>}
+                      {role === 'USER' && <span className="text-lg">👤</span>}
                     </div>
                     <div className="text-left">
                       <div className="font-medium">{role}</div>
                       <div className="text-xs text-gray-500">
                         {role === 'SUPER_ADMIN' && 'Accès complet'}
                         {role === 'ADMIN' && 'Gestion limitée'}
-                        {role === 'UTILISATEUR' && 'Accès basique'}
+                        {role === 'USER' && 'Accès basique'}
                       </div>
                     </div>
                   </div>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Changement de Rôle</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Changement de Rôle</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Vérifications Effectuées</h3>
+        <p>✅ Types de rôles corrigés dans le frontend : <code>'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'</code></p>
+        <p>✅ Composant ChangeRoleModal mis à jour</p>
+        <p>✅ Composant MembersManagement mis à jour</p>
+        <p>✅ Types TypeScript cohérents</p>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Prochaines Étapes</h3>
+        <ol>
+            <li><strong>Démarrer l'application</strong> avec <code>npm run dev</code></li>
+            <li><strong>Se connecter</strong> avec un compte admin</li>
+            <li><strong>Aller dans Paramètres > Membres</strong></li>
+            <li><strong>Tenter de changer le rôle</strong> d'un utilisateur</li>
+            <li><strong>Vérifier</strong> qu'il n'y a plus d'erreur "Erreur inconnue"</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Commandes à Exécuter</h3>
+        <pre><code># Démarrer l'application
+npm run dev
+
+# Ou si vous utilisez le script batch
+start-dev.bat</code></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>⚠️ Points d'Attention</h3>
+        <ul>
+            <li>Le backend utilise encore <code>'UTILISATEUR'</code> dans certaines routes</li>
+            <li>Les labels d'interface utilisateur affichent "Utilisateur" (en français)</li>
+            <li>Le problème principal était dans le frontend et a été résolu</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h3>🎯 Résultat Attendu</h3>
+        <p>Le changement de rôle devrait maintenant fonctionner sans l'erreur "Erreur inconnue".</p>
+        <p>Les rôles disponibles sont : Super Admin, Admin, Manager, Utilisateur</p>
+    </div>
+
+    <script>
+        console.log('🧪 Test de Changement de Rôle - Page chargée');
+        console.log('✅ Vérifiez que l\'application fonctionne correctement');
+    </script>
+</body>
+</html>

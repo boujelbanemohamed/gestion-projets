@@ -137,7 +137,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
         return <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">Super Admin</span>;
       case 'ADMIN':
         return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">Admin</span>;
-      case 'UTILISATEUR':
+      case 'USER':
         return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Utilisateur</span>;
       default:
         return <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">{role}</span>;

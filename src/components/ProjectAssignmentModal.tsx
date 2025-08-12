@@ -89,7 +89,7 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
 
         <div className="p-6">
           {/* Permission Info */}
-          {currentUser.role === 'UTILISATEUR' && (
+          {currentUser.role === 'USER' && (
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Shield className="text-blue-600" size={16} />
@@ -109,7 +109,7 @@ const ProjectAssignmentModal: React.FC<ProjectAssignmentModalProps> = ({
                     Aucun projet disponible pour assignation
                   </p>
                   <p className="text-sm text-yellow-700 mt-1">
-                    {currentUser.role === 'UTILISATEUR'
+                    {currentUser.role === 'USER'
                       ? 'Vous devez être responsable d\'un projet pour pouvoir y assigner des membres.'
                       : 'Aucun projet disponible dans le système.'
                     }

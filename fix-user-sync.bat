@@ -40,7 +40,7 @@ if not exist "node_modules" (
 
 echo.
 echo 🔧 Exécution de la correction des métadonnées...
-node fix-auth-metadata.js
+node fix-auth-metadata.cjs
 
 echo.
 echo ✅ Correction terminée !

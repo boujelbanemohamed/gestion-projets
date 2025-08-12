@@ -58,7 +58,7 @@ export const mockUsers: User[] = [
     fonction: 'Designer UX/UI',
     departement: 'Design',
     email: 'sophie.lemoine@example.com',
-    role: 'UTILISATEUR',
+    role: 'USER',
     assigned_projects: ['1', '2'], // Assigned to design-related projects
     created_at: new Date('2024-01-17')
   },
@@ -69,7 +69,7 @@ export const mockUsers: User[] = [
     fonction: 'Développeur',
     departement: 'IT',
     email: 'jean.moreau@example.com',
-    role: 'UTILISATEUR',
+    role: 'USER',
     assigned_projects: ['3'], // Assigned to one project
     created_at: new Date('2024-01-18')
   },
@@ -80,7 +80,7 @@ export const mockUsers: User[] = [
     fonction: 'Testeur QA',
     departement: 'Qualité',
     email: 'alice.rousseau@example.com',
-    role: 'UTILISATEUR',
+    role: 'USER',
     assigned_projects: ['2', '3'], // Assigned to QA projects
     created_at: new Date('2024-01-19')
   },

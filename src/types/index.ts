@@ -173,6 +173,6 @@ export interface Permission {
 }
 
 export interface RolePermissions {
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER';
   permissions: Permission[];
 }

@@ -42,7 +42,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
   const [editingMember, setEditingMember] = useState<UserType | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR'>('all');
+  const [filterRole, setFilterRole] = useState<'all' | 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'>('all');
   const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
   const [memberToChangeRole, setMemberToChangeRole] = useState<UserType | undefined>();
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
@@ -114,7 +114,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
     setIsChangeRoleModalOpen(true);
   };
 
-  const handleRoleChange = (newRole: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR') => {
+  const handleRoleChange = (newRole: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER') => {
     if (!memberToChangeRole) return;
 
     const updatedMemberData = {
@@ -156,7 +156,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
       fonction: member.fonction,
       departement: member.departement,
       email: member.email,
-      role: permissions.role
+      role: permissions.role as 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER'
     };
 
     onUpdateMember(memberId, updatedMemberData);
@@ -167,7 +167,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
     if (!PermissionService.canAssignProjectsToMember(currentUser, member, projects)) {
       let message = 'Vous n\'avez pas les permissions pour assigner des projets à cet utilisateur.';
 
-      if (currentUser.role === 'UTILISATEUR') {
+      if (currentUser.role === 'USER') {
         message += ' Vous ne pouvez assigner que les projets dont vous êtes responsable, et seulement aux utilisateurs réguliers.';
       } else if (currentUser.role === 'ADMIN') {
         message += ' Vous ne pouvez assigner des projets qu\'aux utilisateurs réguliers.';
@@ -198,7 +198,9 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
         return <Crown className="text-purple-600" size={16} />;
       case 'ADMIN':
         return <Shield className="text-blue-600" size={16} />;
-      case 'UTILISATEUR':
+      case 'MANAGER':
+        return <Users className="text-orange-600" size={16} />;
+      case 'USER':
         return <UserCheck className="text-green-600" size={16} />;
       default:
         return <User className="text-gray-600" size={16} />;
@@ -221,7 +223,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
             <span>Admin</span>
           </span>
         );
-      case 'UTILISATEUR':
+      case 'USER':
         return (
           <span className="inline-flex items-center space-x-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
             <UserCheck size={12} />
@@ -241,7 +243,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
   const getRoleStats = () => {
     const superAdminCount = members.filter(m => m.role === 'SUPER_ADMIN').length;
     const adminCount = members.filter(m => m.role === 'ADMIN').length;
-    const userCount = members.filter(m => m.role === 'UTILISATEUR').length;
+    const userCount = members.filter(m => m.role === 'USER').length;
     
     return { superAdminCount, adminCount, userCount };
   };
@@ -378,7 +380,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
                 <option value="all">Tous les rôles</option>
                 <option value="SUPER_ADMIN">Super Admin</option>
                 <option value="ADMIN">Admin</option>
-                <option value="UTILISATEUR">Utilisateur</option>
+                <option value="USER">Utilisateur</option>
               </select>
             </div>
           </div>

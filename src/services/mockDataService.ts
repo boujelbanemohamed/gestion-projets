@@ -78,7 +78,7 @@ export const MOCK_DATA = {
       nom: 'Bernard',
       prenom: 'Sophie',
       fonction: 'Designer UX/UI',
-      role: 'UTILISATEUR',
+      role: 'USER',
       department_id: 2,
       created_at: new Date().toISOString()
     },

@@ -50,7 +50,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
     }
   };
 
-  const handleDemoLogin = (role: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR') => {
+  const handleDemoLogin = (role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER') => {
     const demoUser = users.find(u => u.role === role);
     if (demoUser) {
       setEmail(demoUser.email);
@@ -171,7 +171,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin, users
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDemoLogin('UTILISATEUR')}
+                  onClick={() => handleDemoLogin('USER')}
                   className="w-full px-3 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
                 >
                   Utilisateur

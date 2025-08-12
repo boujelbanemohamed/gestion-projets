@@ -58,7 +58,7 @@ function App() {
           fonction: user.fonction || '',
           departement: user.departement || 'Non assigné',
           email: user.email,
-          role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR',
+          role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER',
           assigned_projects: [], // Sera géré via une table de liaison
           created_at: new Date(user.created_at || Date.now())
         }));
@@ -75,7 +75,7 @@ function App() {
           fonction: user.fonction || '',
           departement: user.departement || 'Non assigné',
           email: user.email,
-          role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR',
+          role: user.role as 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER',
           assigned_projects: user.assigned_projects || [],
           created_at: new Date(user.created_at || Date.now())
         }));
