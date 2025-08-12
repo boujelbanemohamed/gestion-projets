@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, User, Mail, Building, Briefcase, Search, Edit2, Trash2, Shield, Crown, UserCheck, Settings } from 'lucide-react';
+import { ArrowLeft, Plus, User, Mail, Building, Briefcase, Search, Edit2, Trash2, Shield, Crown, UserCheck, Settings, RefreshCw } from 'lucide-react';
 import { User as UserType, Department, AuthUser, Project } from '../types';
 import { PermissionService } from '../utils/permissions';
 import CreateMemberModal from './CreateMemberModal';
@@ -18,6 +18,7 @@ interface MembersManagementProps {
   onManageDepartments: () => void;
   onUpdatePermissions: (memberId: string, permissions: Record<string, boolean>) => void;
   onAssignProjects: (memberId: string, projectIds: string[]) => void; // Add project assignment handler
+  onSyncUsers?: () => void; // Add sync users handler
   currentUser: AuthUser;
   isLoading?: boolean;
 }
@@ -33,6 +34,7 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
   onManageDepartments,
   onUpdatePermissions,
   onAssignProjects,
+  onSyncUsers,
   currentUser,
   isLoading = false
 }) => {
@@ -288,6 +290,15 @@ const MembersManagement: React.FC<MembersManagementProps> = ({
                 >
                   <Plus size={18} />
                   <span>Créer un membre</span>
+                </button>
+              )}
+              {onSyncUsers && (
+                <button
+                  onClick={onSyncUsers}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center space-x-2"
+                >
+                  <RefreshCw size={18} />
+                  <span>Synchroniser les utilisateurs</span>
                 </button>
               )}
             </div>

@@ -657,6 +657,84 @@ class SupabaseApiService {
     return { users };
   }
 
+  // Vérifier et corriger la synchronisation entre auth.users et users
+  async checkAndFixUserSync(): Promise<{ fixed: number; errors: string[] }> {
+    console.log('🔍 Vérification de la synchronisation des utilisateurs...');
+    
+    const errors: string[] = [];
+    let fixed = 0;
+
+    try {
+      // 1. Récupérer tous les utilisateurs auth
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) {
+        errors.push(`Erreur récupération auth.users: ${authError.message}`);
+        return { fixed, errors };
+      }
+
+      // 2. Récupérer tous les profils users
+      const { data: profileUsers, error: profileError } = await supabase
+        .from('users')
+        .select('*');
+      
+      if (profileError) {
+        errors.push(`Erreur récupération users: ${profileError.message}`);
+        return { fixed, errors };
+      }
+
+      const authUserIds = new Set(authUsers.users.map(u => u.id));
+      const profileUserIds = new Set(profileUsers.map(u => u.id));
+
+      // 3. Trouver les utilisateurs auth sans profil
+      const missingProfiles = authUsers.users.filter(authUser => !profileUserIds.has(authUser.id));
+
+      // 4. Créer les profils manquants
+      for (const authUser of missingProfiles) {
+        try {
+          const displayName = authUser.user_metadata?.full_name as string || '';
+          const [prenom = '', nom = ''] = displayName.split(' ');
+          
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: authUser.id,
+              email: authUser.email,
+              nom: nom || authUser.email?.split('@')[0] || 'Utilisateur',
+              prenom: prenom || 'Supabase',
+              role: 'USER',
+            });
+
+          if (!insertError) {
+            console.log(`✅ Profil créé pour: ${authUser.email}`);
+            fixed++;
+          } else {
+            errors.push(`Erreur création profil pour ${authUser.email}: ${insertError.message}`);
+          }
+        } catch (error) {
+          errors.push(`Erreur traitement ${authUser.email}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+        }
+      }
+
+      // 5. Trouver les profils orphelins (sans utilisateur auth)
+      const orphanProfiles = profileUsers.filter(profileUser => !authUserIds.has(profileUser.id));
+      
+      if (orphanProfiles.length > 0) {
+        console.log(`⚠️ ${orphanProfiles.length} profils orphelins trouvés`);
+        // Optionnel : supprimer les profils orphelins
+        // for (const orphan of orphanProfiles) {
+        //   await supabase.from('users').delete().eq('id', orphan.id);
+        // }
+      }
+
+      console.log(`✅ Synchronisation terminée. ${fixed} profils créés, ${errors.length} erreurs.`);
+      
+    } catch (error) {
+      errors.push(`Erreur générale: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+
+    return { fixed, errors };
+  }
+
   // Subscriptions temps réel
   subscribeToNotifications(userId: string, callback: (notification: any) => void) {
     return supabase

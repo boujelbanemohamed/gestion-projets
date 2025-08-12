@@ -133,6 +133,29 @@ INSERT INTO departments (nom, description) VALUES
 ('Ressources Humaines', 'Gestion des ressources humaines')
 ON CONFLICT DO NOTHING;
 
+-- Trigger pour synchroniser auth.users avec la table custom users
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, nom, prenom, role, fonction)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'nom', split_part(NEW.email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'prenom', 'Utilisateur'),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'USER'),
+    NEW.raw_user_meta_data->>'fonction'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger pour créer automatiquement un profil dans users quand un utilisateur s'inscrit
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
 -- RLS (Row Level Security) Policies
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
@@ -146,6 +169,10 @@ ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
 -- Policies pour les utilisateurs
 CREATE POLICY "Users can view all users" ON users FOR SELECT USING (true);
 CREATE POLICY "Users can update their own profile" ON users FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Authenticated users can create their own profile" ON users FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Admins can manage all users" ON users FOR ALL USING (
+  EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('ADMIN', 'SUPER_ADMIN'))
+);
 
 -- Policies pour les projets
 CREATE POLICY "Users can view all projects" ON projects FOR SELECT USING (true);

@@ -90,6 +90,40 @@ function App() {
     }
   };
 
+  // Synchroniser les utilisateurs entre auth.users et users
+  const syncUsers = async () => {
+    if (!useSupabase) {
+      alert('La synchronisation n\'est disponible qu\'avec Supabase');
+      return;
+    }
+
+    try {
+      setIsLoadingUsers(true);
+      console.log('🔄 Synchronisation des utilisateurs...');
+      
+      const { fixed, errors } = await supabaseApiService.checkAndFixUserSync();
+      
+      if (errors.length > 0) {
+        console.warn('⚠️ Erreurs lors de la synchronisation:', errors);
+      }
+      
+      if (fixed > 0) {
+        console.log(`✅ ${fixed} profils synchronisés`);
+        // Recharger les utilisateurs après synchronisation
+        await loadUsers();
+        showToast(`${fixed} utilisateurs synchronisés avec succès`, 'success', 4000);
+      } else {
+        showToast('Aucune synchronisation nécessaire', 'info', 3000);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la synchronisation:', error);
+      showToast('Erreur lors de la synchronisation', 'error', 4000);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
   // Charger les projets depuis l'API
   const loadProjects = async () => {
     try {
@@ -716,22 +750,23 @@ function App() {
         />
       )}
       
-      {currentView === 'members' && (
-        <MembersManagement
-          members={users}
-          departments={departments}
-          projects={projects}
-          onBack={handleBackToDashboard}
-          onCreateMember={handleCreateMember}
-          onUpdateMember={handleUpdateMember}
-          onDeleteMember={handleDeleteMember}
-          onManageDepartments={() => handleNavigate('departments')}
-          onUpdatePermissions={handleUpdatePermissions}
-          onAssignProjects={handleAssignProjects}
-          currentUser={currentUser}
-          isLoading={isLoadingUsers}
-        />
-      )}
+             {currentView === 'members' && (
+         <MembersManagement
+           members={users}
+           departments={departments}
+           projects={projects}
+           onBack={handleBackToDashboard}
+           onCreateMember={handleCreateMember}
+           onUpdateMember={handleUpdateMember}
+           onDeleteMember={handleDeleteMember}
+           onManageDepartments={() => handleNavigate('departments')}
+           onUpdatePermissions={handleUpdatePermissions}
+           onAssignProjects={handleAssignProjects}
+           onSyncUsers={syncUsers}
+           currentUser={currentUser}
+           isLoading={isLoadingUsers}
+         />
+       )}
 
       {currentView === 'departments' && (
         <DepartmentsManagement
