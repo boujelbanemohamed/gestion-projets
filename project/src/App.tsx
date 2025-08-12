@@ -183,9 +183,17 @@ function App() {
     }
   }, [currentUser]);
 
-  // Get accessible projects based on user role
+  // Get accessible projects based on user role - TEMPORAIREMENT DÉSACTIVÉ POUR DEBUG
   const getAccessibleProjects = () => {
-    return PermissionService.getAccessibleProjects(currentUser, projects);
+    console.log('🔍 getAccessibleProjects - Utilisateur actuel:', currentUser?.role, currentUser?.email);
+    console.log('📊 Projets totaux avant filtre:', projects.length);
+
+    // TEMPORAIRE : Retourner tous les projets pour diagnostic
+    console.log('⚠️ FILTRE PERMISSIONS DÉSACTIVÉ - Affichage de tous les projets');
+    return projects;
+
+    // Code original commenté pour diagnostic :
+    // return PermissionService.getAccessibleProjects(currentUser, projects);
   };
 
   // Get active projects (not closed) avec diagnostic
