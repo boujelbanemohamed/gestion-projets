@@ -188,9 +188,19 @@ function App() {
     return PermissionService.getAccessibleProjects(currentUser, projects);
   };
 
-  // Get active projects (not closed)
+  // Get active projects (not closed) avec diagnostic
   const getActiveProjects = () => {
-    return getAccessibleProjects().filter(project => project.statut !== 'cloture');
+    const accessibleProjects = getAccessibleProjects();
+    const activeProjects = accessibleProjects.filter(project => project.statut !== 'cloture');
+
+    console.log('🔍 getActiveProjects - Diagnostic:', {
+      totalProjects: projects.length,
+      accessibleProjects: accessibleProjects.length,
+      activeProjects: activeProjects.length,
+      projectStatuses: projects.map(p => ({ nom: p.nom, statut: p.statut }))
+    });
+
+    return activeProjects;
   };
 
   // Get closed projects
@@ -268,10 +278,11 @@ function App() {
       console.log('✅ Projet créé avec succès:', createdProject);
 
       // Ajouter le projet créé à la liste locale
+      const projectId = createdProject.id || createdProject.project?.id || 'temp_' + Date.now();
       const newProject: Project = {
-        id: createdProject.id || createdProject.project?.id,
-        nom: createdProject.nom || createdProject.project?.nom,
-        description: createdProject.description || createdProject.project?.description,
+        id: projectId,
+        nom: createdProject.nom || createdProject.project?.nom || projectData.nom,
+        description: createdProject.description || createdProject.project?.description || projectData.description,
         statut: 'planification',
         date_debut: projectData.dateDebut,
         date_fin: projectData.dateFin,
@@ -298,10 +309,17 @@ function App() {
 
       // Ajouter le projet à l'état local IMMÉDIATEMENT
       console.log('📝 Ajout du projet à l\'état local...');
+      console.log('🆕 Nouveau projet à ajouter:', {
+        id: newProject.id,
+        nom: newProject.nom,
+        statut: newProject.statut,
+        description: newProject.description
+      });
+
       setProjects(prev => {
         const updatedProjects = [...prev, newProject];
         console.log('✅ Projets mis à jour:', updatedProjects.length, 'projets total');
-        console.log('🆕 Nouveau projet ajouté:', newProject.nom, 'ID:', newProject.id);
+        console.log('📊 Liste complète des projets:', updatedProjects.map(p => ({ id: p.id, nom: p.nom, statut: p.statut })));
         return updatedProjects;
       });
 

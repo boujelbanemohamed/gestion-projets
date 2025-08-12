@@ -7,7 +7,6 @@ import { isProjectApproachingDeadline, isProjectOverdue, DEFAULT_ALERT_THRESHOLD
 import { PermissionService } from '../utils/permissions';
 import CentralErrorHandler from '../services/centralErrorHandler';
 import { normalizeTaskStatusForUI, mapSupabaseTaskStatusToUI } from '../utils/statusMapping';
-import logger from '../services/loggingService';
 
 interface DashboardProps {
   projects: Project[];
@@ -58,7 +57,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (isLoadingTasks) return; // Éviter les chargements multiples
 
     console.log('🚀 Dashboard: Chargement simple des tâches');
-    logger.info('Début du chargement des tâches', 'Dashboard.loadAllProjectTasks', { projectCount: projects.length });
+    console.log('📊 Nombre de projets à traiter:', projects.length);
     setIsLoadingTasks(true);
 
     try {
@@ -75,7 +74,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       const allTasks = await response.json();
       console.log('✅ Dashboard: Tâches récupérées:', allTasks.length);
-      logger.info(`${allTasks.length} tâches récupérées avec succès`, 'Dashboard.loadAllProjectTasks');
 
       // Grouper les tâches par projet
       const tasksByProject: { [projectId: string]: Task[] } = {};
@@ -134,11 +132,19 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, []);
 
-  // Chargement simple au montage
+  // Chargement simple au montage avec diagnostic
   useEffect(() => {
     console.log('🎯 Dashboard: Chargement au montage');
+    console.log('📊 État des projets:', {
+      count: projects.length,
+      projects: projects.map(p => ({ id: p.id, nom: p.nom, statut: p.statut }))
+    });
+
     if (projects.length > 0) {
+      console.log('✅ Projets détectés, chargement des tâches...');
       loadAllProjectTasks();
+    } else {
+      console.log('⚠️ Aucun projet détecté');
     }
   }, [projects.length]); // Se déclenche quand les projets sont chargés
 
@@ -223,6 +229,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   }) => {
     onCreateProject(projectData);
   };
+
+  // Diagnostic en temps réel
+  console.log('🔍 Dashboard RENDER - État actuel:', {
+    totalProjects: projects.length,
+    filteredProjects: filteredAndSortedProjects.length,
+    isLoadingTasks,
+    searchTerm,
+    filterDepartment
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
