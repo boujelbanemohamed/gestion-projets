@@ -106,7 +106,7 @@ class SupabaseApiService {
   }): Promise<{ user: AuthUser; token: string }> {
     console.log('👤 Création d\'un nouvel utilisateur:', userData.email)
 
-    // 1. Créer l'utilisateur dans auth.users
+    // 1. Créer l'utilisateur dans auth.users avec toutes les métadonnées
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: userData.email,
       password: userData.password,
@@ -132,6 +132,7 @@ class SupabaseApiService {
     }
 
     console.log('✅ Utilisateur créé dans auth.users, ID:', authData.user.id)
+    console.log('📋 Métadonnées créées:', authData.user.user_metadata)
 
     // 2. Créer le profil dans la table custom users
     const profilePayload: Tables['users']['Insert'] = {
@@ -144,20 +145,59 @@ class SupabaseApiService {
       departement_id: userData.departement_id,
     }
 
+    console.log('📝 Création du profil dans public.users:', profilePayload)
+
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .insert(profilePayload)
-      .select('*')
+      .select()
       .single()
 
     if (profileError) {
       console.error('❌ Erreur création profil users:', profileError)
       // On continue même si le profil échoue, on utilisera auth.users
+      console.log('⚠️ Le profil sera créé automatiquement par le trigger Supabase')
+    } else {
+      console.log('✅ Profil créé manuellement dans users:', profile)
     }
 
-    console.log('✅ Profil créé dans users:', profile)
+    // 3. Vérifier que la synchronisation est parfaite
+    try {
+      const { data: { user: authUser } } = await supabase.auth.admin.getUserById(authData.user.id)
+      if (authUser) {
+        console.log('🔍 Vérification des métadonnées auth.users:', authUser.user_metadata)
+        
+        // Vérifier si les métadonnées sont correctes
+        const metadata = authUser.user_metadata || {}
+        const isSynced = (
+          metadata.nom === userData.nom &&
+          metadata.prenom === userData.prenom &&
+          metadata.role === (userData.role || 'USER') &&
+          metadata.fonction === userData.fonction &&
+          metadata.departement_id === userData.departement_id
+        )
+        
+        if (!isSynced) {
+          console.log('⚠️ Métadonnées non synchronisées, correction...')
+          await supabase.auth.admin.updateUserById(authData.user.id, {
+            user_metadata: {
+              nom: userData.nom,
+              prenom: userData.prenom,
+              role: userData.role || 'USER',
+              fonction: userData.fonction,
+              departement_id: userData.departement_id,
+            }
+          })
+          console.log('✅ Métadonnées corrigées')
+        } else {
+          console.log('✅ Métadonnées parfaitement synchronisées')
+        }
+      }
+    } catch (verifyError) {
+      console.warn('⚠️ Impossible de vérifier la synchronisation:', verifyError)
+    }
 
-    // 3. Retourner l'utilisateur
+    // 4. Retourner l'utilisateur
     const authUser: AuthUser = {
       id: authData.user.id,
       email: userData.email,
@@ -168,6 +208,7 @@ class SupabaseApiService {
       departement_id: userData.departement_id,
     }
 
+    console.log('👤 Utilisateur final créé:', authUser)
     return {
       user: authUser,
       token: authData.session?.access_token || '',
@@ -184,7 +225,9 @@ class SupabaseApiService {
     if (!user) return null
 
     console.log('🔍 Récupération du profil pour user ID:', user.id)
+    console.log('📋 Métadonnées auth.users:', user.user_metadata)
 
+    // D'abord essayer de récupérer le profil depuis la table custom users
     const { data: profile, error } = await supabase
       .from('users')
       .select('*')
@@ -197,20 +240,53 @@ class SupabaseApiService {
     }
 
     if (!profile) {
-      console.log('⚠️ Profil non trouvé, fallback auth.users')
+      console.log('⚠️ Profil non trouvé dans public.users, fallback auth.users')
       // Fallback: utiliser les données auth.users directement
-      return {
+      const authUser: AuthUser = {
         id: user.id,
         email: user.email ?? '',
-        nom: user.user_metadata?.full_name?.split(' ')[1] || '',
-        prenom: user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur',
-        role: 'USER',
+        nom: user.user_metadata?.nom || user.user_metadata?.full_name?.split(' ')[1] || '',
+        prenom: user.user_metadata?.prenom || user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur',
+        role: (user.user_metadata?.role as AuthUser['role']) || 'USER',
+        fonction: user.user_metadata?.fonction,
+        departement_id: user.user_metadata?.departement_id,
+      }
+      
+      console.log('👤 Utilisateur fallback depuis auth.users:', authUser)
+      return authUser
+    }
+
+    console.log('✅ Profil trouvé dans public.users:', profile)
+
+    // Vérifier si les métadonnées auth.users sont synchronisées
+    const authMetadata = user.user_metadata || {}
+    const needsSync = (
+      authMetadata.nom !== profile.nom ||
+      authMetadata.prenom !== profile.prenom ||
+      authMetadata.role !== profile.role ||
+      authMetadata.fonction !== profile.fonction ||
+      authMetadata.departement_id !== profile.departement_id
+    )
+
+    if (needsSync) {
+      console.log('⚠️ Métadonnées auth.users désynchronisées, synchronisation...')
+      try {
+        await supabase.auth.admin.updateUserById(user.id, {
+          user_metadata: {
+            nom: profile.nom,
+            prenom: profile.prenom,
+            role: profile.role,
+            fonction: profile.fonction,
+            departement_id: profile.departement_id,
+          }
+        })
+        console.log('✅ Métadonnées auth.users synchronisées')
+      } catch (syncError) {
+        console.warn('⚠️ Erreur synchronisation métadonnées:', syncError)
       }
     }
 
-    console.log('✅ Profil trouvé:', profile)
-
-    return {
+    const authUser: AuthUser = {
       id: profile.id as string,
       email: (profile as any).email || '',
       nom: (profile as any).nom || '',
@@ -219,6 +295,9 @@ class SupabaseApiService {
       fonction: (profile as any).fonction || undefined,
       departement_id: (profile as any).departement_id || undefined,
     }
+
+    console.log('👤 Utilisateur final:', authUser)
+    return authUser
   }
 
   // Projets
@@ -662,56 +741,99 @@ class SupabaseApiService {
 
   // Vérifier et corriger la synchronisation entre auth.users et users
   async checkAndFixUserSync(): Promise<{ fixed: number; errors: string[] }> {
-    console.log('🔍 Vérification de la synchronisation des utilisateurs...');
-    
-    const errors: string[] = [];
     let fixed = 0;
+    const errors: string[] = [];
 
     try {
+      console.log('🔍 Vérification de la synchronisation des utilisateurs...');
+
       // 1. Récupérer tous les utilisateurs auth
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       if (authError) {
-        errors.push(`Erreur récupération auth.users: ${authError.message}`);
+        errors.push(`Erreur auth.users: ${authError.message}`);
         return { fixed, errors };
       }
 
-      // 2. Récupérer tous les profils users
+      console.log(`📊 ${authUsers.users.length} utilisateurs trouvés dans auth.users`);
+
+      // 2. Récupérer tous les profils
       const { data: profileUsers, error: profileError } = await supabase
         .from('users')
         .select('*');
       
       if (profileError) {
-        errors.push(`Erreur récupération users: ${profileError.message}`);
+        errors.push(`Erreur public.users: ${profileError.message}`);
         return { fixed, errors };
       }
 
-      const authUserIds = new Set(authUsers.users.map(u => u.id));
-      const profileUserIds = new Set(profileUsers.map(u => u.id));
+      console.log(`📊 ${profileUsers.length} profils trouvés dans public.users`);
 
-      // 3. Trouver les utilisateurs auth sans profil
-      const missingProfiles = authUsers.users.filter(authUser => !profileUserIds.has(authUser.id));
+      // 3. Créer un map des profils existants
+      const profileMap = new Map(profileUsers.map(p => [p.id, p]));
 
-      // 4. Créer les profils manquants
-      for (const authUser of missingProfiles) {
+      // 4. Traiter chaque utilisateur auth
+      for (const authUser of authUsers.users) {
         try {
-          const displayName = authUser.user_metadata?.full_name as string || '';
-          const [prenom = '', nom = ''] = displayName.split(' ');
+          const profile = profileMap.get(authUser.id);
           
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert({
-              id: authUser.id,
-              email: authUser.email,
-              nom: nom || authUser.email?.split('@')[0] || 'Utilisateur',
-              prenom: prenom || 'Supabase',
-              role: 'USER',
-            });
+          if (!profile) {
+            // Profil manquant, le créer
+            console.log(`⚠️ Profil manquant pour ${authUser.email}, création...`);
+            
+            const nom = authUser.user_metadata?.nom || authUser.user_metadata?.full_name?.split(' ')[1] || authUser.email?.split('@')[0] || 'Utilisateur';
+            const prenom = authUser.user_metadata?.prenom || authUser.user_metadata?.full_name?.split(' ')[0] || 'Utilisateur';
+            const role = authUser.user_metadata?.role || 'USER';
+            const fonction = authUser.user_metadata?.fonction;
+            const departement_id = authUser.user_metadata?.departement_id;
 
-          if (!insertError) {
-            console.log(`✅ Profil créé pour: ${authUser.email}`);
-            fixed++;
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert({
+                id: authUser.id,
+                email: authUser.email,
+                nom,
+                prenom,
+                role,
+                fonction,
+                departement_id,
+              });
+
+            if (!insertError) {
+              console.log(`✅ Profil créé pour: ${authUser.email}`);
+              fixed++;
+            } else {
+              errors.push(`Erreur création profil pour ${authUser.email}: ${insertError.message}`);
+            }
           } else {
-            errors.push(`Erreur création profil pour ${authUser.email}: ${insertError.message}`);
+            // Profil existe, vérifier la synchronisation des métadonnées
+            const metadata = authUser.user_metadata || {};
+            const needsSync = (
+              metadata.nom !== profile.nom ||
+              metadata.prenom !== profile.prenom ||
+              metadata.role !== profile.role ||
+              metadata.fonction !== profile.fonction ||
+              metadata.departement_id !== profile.departement_id
+            );
+
+            if (needsSync) {
+              console.log(`🔄 Synchronisation des métadonnées pour ${authUser.email}...`);
+              
+              try {
+                await supabase.auth.admin.updateUserById(authUser.id, {
+                  user_metadata: {
+                    nom: profile.nom,
+                    prenom: profile.prenom,
+                    role: profile.role,
+                    fonction: profile.fonction,
+                    departement_id: profile.departement_id,
+                  }
+                });
+                console.log(`✅ Métadonnées synchronisées pour ${authUser.email}`);
+                fixed++;
+              } catch (syncError) {
+                errors.push(`Erreur synchronisation métadonnées pour ${authUser.email}: ${syncError instanceof Error ? syncError.message : 'Erreur inconnue'}`);
+              }
+            }
           }
         } catch (error) {
           errors.push(`Erreur traitement ${authUser.email}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -719,6 +841,7 @@ class SupabaseApiService {
       }
 
       // 5. Trouver les profils orphelins (sans utilisateur auth)
+      const authUserIds = new Set(authUsers.users.map(u => u.id));
       const orphanProfiles = profileUsers.filter(profileUser => !authUserIds.has(profileUser.id));
       
       if (orphanProfiles.length > 0) {
@@ -729,7 +852,7 @@ class SupabaseApiService {
         // }
       }
 
-      console.log(`✅ Synchronisation terminée. ${fixed} profils créés, ${errors.length} erreurs.`);
+      console.log(`✅ Synchronisation terminée. ${fixed} problèmes résolus, ${errors.length} erreurs.`);
       
     } catch (error) {
       errors.push(`Erreur générale: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -787,6 +910,8 @@ class SupabaseApiService {
 
   async updateUser(id: string, updates: Partial<AuthUser>): Promise<AuthUser> {
     try {
+      console.log('🔄 Mise à jour de l\'utilisateur:', id, 'avec les données:', updates);
+      
       // 1. Mettre à jour la table public.users
       const { data, error } = await supabase
         .from('users')
@@ -795,7 +920,12 @@ class SupabaseApiService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur mise à jour public.users:', error);
+        throw error;
+      }
+
+      console.log('✅ Table public.users mise à jour avec succès');
 
       // 2. Synchroniser les métadonnées dans auth.users
       const metadataUpdates: any = {};
@@ -806,29 +936,38 @@ class SupabaseApiService {
       if (updates.departement_id) metadataUpdates.departement_id = updates.departement_id;
 
       if (Object.keys(metadataUpdates).length > 0) {
+        console.log('🔄 Mise à jour des métadonnées auth.users:', metadataUpdates);
+        
         const { error: authError } = await supabase.auth.admin.updateUserById(id, {
           user_metadata: metadataUpdates
         });
         
         if (authError) {
-          console.warn('⚠️ Erreur lors de la mise à jour des métadonnées auth:', authError);
+          console.error('❌ Erreur mise à jour métadonnées auth.users:', authError);
+          throw new Error(`Erreur synchronisation auth.users: ${authError.message}`);
+        } else {
+          console.log('✅ Métadonnées auth.users mises à jour avec succès');
         }
       }
 
       // 3. Mettre à jour le mot de passe si fourni
       if (updates.mot_de_passe) {
+        console.log('🔐 Mise à jour du mot de passe...');
         const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
           password: updates.mot_de_passe
         });
         
         if (passwordError) {
-          console.warn('⚠️ Erreur lors de la mise à jour du mot de passe:', passwordError);
+          console.warn('⚠️ Erreur mise à jour mot de passe:', passwordError);
+        } else {
+          console.log('✅ Mot de passe mis à jour avec succès');
         }
       }
 
+      console.log('✅ Synchronisation complète réussie pour l\'utilisateur:', id);
       return data;
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+      console.error('❌ Erreur lors de la mise à jour de l\'utilisateur:', error);
       throw error;
     }
   }

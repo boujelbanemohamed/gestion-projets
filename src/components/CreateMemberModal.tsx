@@ -26,7 +26,7 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
     fonction: '',
     departement: '',
     email: '',
-    role: 'UTILISATEUR' as 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR',
+    role: 'USER' as 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER',
     motDePasse: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +51,7 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
           fonction: '',
           departement: '',
           email: '',
-          role: 'UTILISATEUR',
+          role: 'USER',
           motDePasse: ''
         });
       }
@@ -124,7 +124,7 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
         fonction: '',
         departement: '',
         email: '',
-        role: 'UTILISATEUR',
+        role: 'USER',
         motDePasse: ''
       });
       setErrors({});
@@ -147,8 +147,10 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
         return <Crown className="text-purple-600" size={16} />;
       case 'ADMIN':
         return <Shield className="text-blue-600" size={16} />;
-      case 'UTILISATEUR':
-        return <UserCheck className="text-green-600" size={16} />;
+      case 'MANAGER':
+        return <UserCheck className="text-orange-600" size={16} />;
+      case 'USER':
+        return <User className="text-green-600" size={16} />;
       default:
         return <User className="text-gray-600" size={16} />;
     }
@@ -333,7 +335,8 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
                 onChange={(e) => handleInputChange('role', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               >
-                <option value="UTILISATEUR">Utilisateur</option>
+                <option value="USER">Utilisateur</option>
+                <option value="MANAGER">Manager</option>
                 <option value="ADMIN">Admin</option>
                 <option value="SUPER_ADMIN">Super Admin</option>
               </select>
@@ -342,13 +345,15 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
                   {getRoleIcon(formData.role)}
                   <span className="text-sm font-medium text-gray-900">
                     {formData.role === 'SUPER_ADMIN' ? 'Super Admin' : 
-                     formData.role === 'ADMIN' ? 'Admin' : 'Utilisateur'}
+                     formData.role === 'ADMIN' ? 'Admin' : 
+                     formData.role === 'MANAGER' ? 'Manager' : 'Utilisateur'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-600">
                   {formData.role === 'SUPER_ADMIN' && 'Accès total + gestion des rôles'}
                   {formData.role === 'ADMIN' && 'Accès complet sauf gestion des rôles'}
-                  {formData.role === 'UTILISATEUR' && 'Accès limité aux projets assignés'}
+                  {formData.role === 'MANAGER' && 'Accès limité aux projets assignés'}
+                  {formData.role === 'USER' && 'Accès limité aux projets assignés'}
                 </p>
               </div>
             </div>
@@ -363,7 +368,8 @@ const CreateMemberModal: React.FC<CreateMemberModalProps> = ({
                 {getRoleIcon(editingMember.role)}
                 <span className="text-sm font-medium text-gray-900">
                   {editingMember.role === 'SUPER_ADMIN' ? 'Super Admin' : 
-                   editingMember.role === 'ADMIN' ? 'Admin' : 'Utilisateur'}
+                   editingMember.role === 'ADMIN' ? 'Admin' : 
+                   editingMember.role === 'MANAGER' ? 'Manager' : 'Utilisateur'}
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">

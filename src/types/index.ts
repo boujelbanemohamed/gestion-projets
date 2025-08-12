@@ -5,7 +5,7 @@ export interface User {
   fonction?: string;
   departement: string;
   email: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER';
   mot_de_passe?: string; // Only for creation/update, not stored in state
   assigned_projects?: string[]; // Array of project IDs the user is assigned to
   created_at: Date;
