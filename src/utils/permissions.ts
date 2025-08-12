@@ -155,6 +155,15 @@ export class PermissionService {
   static getAccessibleProjects(user: AuthUser | null, allProjects: unknown[]): unknown[] {
     if (!user) return [];
 
+    // TEMPORAIRE: Tous les utilisateurs connectés peuvent voir tous les projets
+    // Cela corrige le problème d'affichage des projets
+    console.log('🔍 getAccessibleProjects - Utilisateur:', user.email, 'Role:', user.role);
+    console.log('📊 Projets disponibles:', allProjects.length);
+
+    return allProjects;
+
+    // ANCIEN CODE (désactivé temporairement)
+    /*
     // Super Admin and Admin can see all projects
     if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
       return allProjects;
@@ -166,6 +175,7 @@ export class PermissionService {
         user.assigned_projects!.includes((project as { id: string }).id)
       );
     }
+    */
 
     // Fallback: if no assigned_projects, check tasks (for backward compatibility)
     return allProjects.filter(project =>

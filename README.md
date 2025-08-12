@@ -73,20 +73,43 @@ L'application utilise Supabase avec le schéma suivant :
 
 ## 🚀 Déploiement
 
-### Option 1 : Netlify (Recommandé)
+### Configuration Automatique
+Pour configurer rapidement le déploiement sur Netlify, Supabase et GitHub :
+
 ```bash
-npm run build
-# Déployez le dossier dist/ sur Netlify
+# Exécuter le script de configuration
+.\setup-deployment.bat
 ```
 
-### Option 2 : Vercel
+### Configuration Manuelle
+
+#### 1. **GitHub**
 ```bash
-npm run build
-# Déployez avec Vercel CLI ou interface web
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/VOTRE_USERNAME/VOTRE_REPO.git
+git push -u origin main
 ```
 
-### Option 3 : Autres plateformes
-L'application est une SPA statique qui peut être déployée sur n'importe quelle plateforme supportant les sites statiques.
+#### 2. **Supabase**
+1. Créez un projet sur [Supabase](https://supabase.com)
+2. Récupérez vos clés API dans Settings > API
+3. Configurez les variables d'environnement :
+   ```
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+
+#### 3. **Netlify**
+1. Connectez votre repository GitHub à Netlify
+2. Configurez les variables d'environnement dans Site Settings
+3. Le fichier `netlify.toml` configure automatiquement les redirections
+
+### Déploiement Automatique
+Une fois configuré, chaque push sur la branche `main` déclenchera automatiquement un déploiement.
+
+📖 **Guide complet** : Consultez `deploy-setup.md` pour les instructions détaillées.
 
 ## 📁 Structure du projet
 

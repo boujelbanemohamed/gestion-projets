@@ -6,7 +6,7 @@ import { AuthService } from '../utils/auth';
 interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: AuthUser;
+  user: AuthUser | null;
   onLogout: () => void;
   onProfileUpdate: (user: AuthUser) => void;
 }
@@ -23,10 +23,10 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   
   // Profile form
   const [profileData, setProfileData] = useState({
-    nom: user.nom,
-    prenom: user.prenom,
-    fonction: user.fonction || '',
-    email: user.email
+    nom: user?.nom || '',
+    prenom: user?.prenom || '',
+    fonction: user?.fonction || '',
+    email: user?.email || ''
   });
   
   // Password form
@@ -43,6 +43,11 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState('');
+
+  // Protection contre user null
+  if (!isOpen || !user) {
+    return null;
+  }
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();

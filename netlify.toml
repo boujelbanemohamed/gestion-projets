@@ -3,10 +3,9 @@
   command = "npm run build"
 
 [build.environment]
-  VITE_SUPABASE_URL = "https://obdadipsbbrlwetkuyui.supabase.co"
-  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MjE4NzQsImV4cCI6MjA1MTQ5Nzg3NH0.Ej4Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8"
-  VITE_USE_SUPABASE = "false"
-  VITE_USE_MOCK_DATA = "true"
+  # Ces variables seront remplacées par les variables d'environnement Netlify
+  VITE_USE_SUPABASE = "true"
+  VITE_USE_MOCK_DATA = "false"
 
 [[redirects]]
   from = "/*"
