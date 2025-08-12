@@ -1,0 +1,50 @@
+name: Sync Cursor Branch
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  sync-cursor:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    
+    - name: Sync Cursor branch with main
+      run: |
+        # Créer ou mettre à jour la branche Cursor
+        git checkout -B Cursor
+        
+        # Pull les dernières modifications de main
+        git pull origin main --no-edit
+        
+        # Pousser sur Cursor
+        git push origin Cursor --force-with-lease
+        
+        echo "✅ Branche Cursor synchronisée avec main"
+    
+    - name: Create Pull Request (if needed)
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        base: main
+        branch: cursor-sync
+        title: 'chore: sync Cursor branch with main'
+        body: |
+          🤖 Synchronisation automatique de la branche Cursor avec main
+          
+          - Pull des dernières modifications de main
+          - Mise à jour de la branche Cursor
+          - Push automatique
+        delete-branch: true
