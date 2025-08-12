@@ -115,6 +115,9 @@ class SupabaseApiService {
           full_name: `${userData.prenom} ${userData.nom}`,
           nom: userData.nom,
           prenom: userData.prenom,
+          role: userData.role || 'USER',
+          fonction: userData.fonction,
+          departement_id: userData.departement_id,
         }
       }
     })
@@ -780,6 +783,54 @@ class SupabaseApiService {
     // Pour l'instant, on simule le téléchargement
     // Dans une vraie implémentation, on utiliserait Supabase Storage
     return new Blob(['PV de réunion simulé'], { type: 'application/pdf' });
+  }
+
+  async updateUser(id: string, updates: Partial<AuthUser>): Promise<AuthUser> {
+    try {
+      // 1. Mettre à jour la table public.users
+      const { data, error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // 2. Synchroniser les métadonnées dans auth.users
+      const metadataUpdates: any = {};
+      if (updates.nom) metadataUpdates.nom = updates.nom;
+      if (updates.prenom) metadataUpdates.prenom = updates.prenom;
+      if (updates.role) metadataUpdates.role = updates.role;
+      if (updates.fonction) metadataUpdates.fonction = updates.fonction;
+      if (updates.departement_id) metadataUpdates.departement_id = updates.departement_id;
+
+      if (Object.keys(metadataUpdates).length > 0) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(id, {
+          user_metadata: metadataUpdates
+        });
+        
+        if (authError) {
+          console.warn('⚠️ Erreur lors de la mise à jour des métadonnées auth:', authError);
+        }
+      }
+
+      // 3. Mettre à jour le mot de passe si fourni
+      if (updates.mot_de_passe) {
+        const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
+          password: updates.mot_de_passe
+        });
+        
+        if (passwordError) {
+          console.warn('⚠️ Erreur lors de la mise à jour du mot de passe:', passwordError);
+        }
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+      throw error;
+    }
   }
 }
 

@@ -380,35 +380,8 @@ function App() {
     try {
       console.log('🔄 Mise à jour du membre:', id);
       
-      // Mettre à jour dans la table custom users
-      const { error } = await supabase
-        .from('users')
-        .update({
-          nom: memberData.nom,
-          prenom: memberData.prenom,
-          email: memberData.email,
-          role: memberData.role,
-          fonction: memberData.fonction,
-          departement_id: undefined, // Sera géré via la relation departement
-        })
-        .eq('id', id);
-
-      if (error) {
-        console.error('❌ Erreur mise à jour Supabase:', error);
-        throw new Error(error.message);
-      }
-
-      // Mettre à jour le mot de passe si fourni
-      if (memberData.mot_de_passe) {
-        console.log('🔐 Mise à jour du mot de passe pour:', memberData.email);
-        const { error: passwordError } = await supabase.auth.admin.updateUserById(id, {
-          password: memberData.mot_de_passe
-        });
-        
-        if (passwordError) {
-          console.warn('⚠️ Erreur mise à jour mot de passe:', passwordError);
-        }
-      }
+      // Utiliser la fonction updateUser qui synchronise les deux tables
+      await supabaseApiService.updateUser(id, memberData);
 
       console.log('✅ Membre mis à jour avec succès');
 
