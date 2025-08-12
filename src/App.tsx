@@ -64,6 +64,40 @@ function App() {
     }
   };
 
+  // Charger les projets depuis l'API
+  const loadProjects = async () => {
+    try {
+      console.log('🔄 Chargement des projets depuis l\'API...');
+      const response = await api.getProjects();
+
+      // Convertir les projets Supabase au format attendu par l'app
+      const convertedProjects = response.projects.map(project => ({
+        id: project.id.toString(),
+        nom: project.nom,
+        description: project.description || '',
+        statut: project.statut as 'planifie' | 'en_cours' | 'en_pause' | 'termine' | 'annule' | 'cloture',
+        date_debut: project.date_debut ? new Date(project.date_debut) : undefined,
+        date_fin: project.date_fin ? new Date(project.date_fin) : undefined,
+        budget_initial: project.budget || 0,
+        devise: 'EUR', // Valeur par défaut
+        departement: project.departement || 'Non assigné',
+        created_by: project.created_by || '',
+        created_at: new Date(project.created_at || Date.now()),
+        updated_at: new Date(project.updated_at || Date.now()),
+        taches: [], // Les tâches seront chargées séparément si nécessaire
+        attachments: []
+      }));
+
+      console.log('✅ Projets chargés:', convertedProjects.length);
+      setProjects(convertedProjects);
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des projets:', error);
+      console.log('🔄 Utilisation des données mockées...');
+      // En cas d'erreur, garder les données mockées
+      setProjects(mockProjects);
+    }
+  };
+
   // Check for existing authentication on app load
   useEffect(() => {
     // Pour Supabase, on vérifiera la session automatiquement
@@ -71,10 +105,11 @@ function App() {
     setIsLoginModalOpen(true);
   }, []);
 
-  // Charger les utilisateurs quand un utilisateur se connecte
+  // Charger les utilisateurs et projets quand un utilisateur se connecte
   useEffect(() => {
     if (currentUser) {
       loadUsers();
+      loadProjects();
     }
   }, [currentUser]);
 

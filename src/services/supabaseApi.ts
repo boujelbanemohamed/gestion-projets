@@ -67,15 +67,21 @@ class SupabaseApiService {
 
   // Projets
   async getProjects(): Promise<{ projects: Project[] }> {
+    console.log('🔍 Récupération des projets depuis Supabase...');
+
     const { data, error } = await supabase
       .from('projects')
       .select(`
-        *,
-        created_by_user:users!projects_created_by_fkey(nom, prenom)
+        *
       `)
       .order('created_at', { ascending: false })
 
-    if (error) throw new Error(error.message)
+    if (error) {
+      console.error('❌ Erreur Supabase:', error);
+      throw new Error(error.message);
+    }
+
+    console.log('📊 Données brutes reçues:', data);
 
     const projects = data.map(project => ({
       id: project.id,
@@ -90,6 +96,7 @@ class SupabaseApiService {
       updated_at: project.updated_at,
     }))
 
+    console.log('✅ Projets convertis:', projects.length);
     return { projects }
   }
 
