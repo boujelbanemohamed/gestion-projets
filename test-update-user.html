@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Fonction updateUser</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de la Fonction updateUser</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Instructions de Test</h3>
+            <p>Ce fichier vous aide à tester la fonction <code>updateUser</code> et identifier le problème exact.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Étapes de Test</h3>
+            <ol>
+                <li><strong>Ouvrir la console</strong> du navigateur (F12)</li>
+                <li><strong>Démarrer l'application</strong> avec <code>npm run dev</code></li>
+                <li><strong>Se connecter</strong> avec un compte admin</li>
+                <li><strong>Aller dans</strong> Paramètres > Membres</li>
+                <li><strong>Tenter de changer le rôle</strong> d'un utilisateur</li>
+                <li><strong>Regarder la console</strong> pour les messages de debug</li>
+            </ol>
+        </div>
+
+        <div class="test-section warning">
+            <h3>⚠️ Messages de Debug à Surveiller</h3>
+            <p>Dans la console, vous devriez voir ces messages dans l'ordre :</p>
+            <pre><code>🔄 Mise à jour du membre: [ID]
+🔍 Données à mettre à jour: {role: "MANAGER", ...}
+🔍 ID utilisateur: [ID]
+🔍 Utilisateur actuel: {...}
+
+🔄 Mise à jour de l'utilisateur: [ID] avec les données: {...}
+🔍 Type des données: object
+🔍 Clés des données: ["role"]
+🔍 Données role: MANAGER
+
+📝 Étape 1: Mise à jour de la table public.users...
+✅ Table public.users mise à jour avec succès
+✅ Données retournées: {...}
+
+📝 Étape 2: Synchronisation des métadonnées auth.users...
+🔍 Métadonnées à synchroniser: {role: "MANAGER"}
+🔍 Nombre de métadonnées: 1
+🔄 Mise à jour des métadonnées auth.users: {role: "MANAGER"}
+🔐 Appel de supabase.auth.updateUser...
+✅ Métadonnées auth.users mises à jour avec succès
+
+✅ Synchronisation complète réussie pour l'utilisateur: [ID]
+✅ Membre mis à jour avec succès</code></pre>
+        </div>
+
+        <div class="test-section error">
+            <h3>❌ Erreurs Possibles</h3>
+            <p>Si vous voyez des erreurs, notez-les précisément :</p>
+            <ul>
+                <li><strong>Erreur public.users :</strong> Problème de base de données, permissions, ou contraintes</li>
+                <li><strong>Erreur auth.users :</strong> Problème d'authentification ou de métadonnées</li>
+                <li><strong>Erreur de type :</strong> Problème de conversion des données</li>
+            </ul>
+        </div>
+
+        <div class="test-section success">
+            <h3>🎯 Résultat Attendu</h3>
+            <p>Si tout fonctionne, vous devriez voir tous les messages de succès et le rôle devrait être changé sans erreur.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Code de Debug Ajouté</h3>
+            <p>Nous avons ajouté du debug dans :</p>
+            <ul>
+                <li><strong>App.tsx :</strong> Dans <code>handleUpdateMember</code></li>
+                <li><strong>supabaseApi.ts :</strong> Dans <code>updateUser</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        console.log('🧪 Test de la Fonction updateUser - Page chargée');
+        console.log('✅ Ouvrez la console et testez le changement de rôle');
+        console.log('🔍 Surveillez tous les messages de debug');
+    </script>
+</body>
+</html>

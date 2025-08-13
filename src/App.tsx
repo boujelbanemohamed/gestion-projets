@@ -379,6 +379,9 @@ function App() {
 
     try {
       console.log('🔄 Mise à jour du membre:', id);
+      console.log('🔍 Données à mettre à jour:', memberData);
+      console.log('🔍 ID utilisateur:', id);
+      console.log('🔍 Utilisateur actuel:', currentUser);
       
       // Utiliser la fonction updateUser qui synchronise les deux tables
       await supabaseApiService.updateUser(id, memberData);

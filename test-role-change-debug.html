@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Diagnostic Changement de Rôle</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .debug { background-color: #f8f9fa; border: 1px solid #e9ecef; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; max-height: 300px; overflow-y: auto; }
+        .step { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnostic du Changement de Rôle</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Problème Identifié</h3>
+            <p><strong>Erreur :</strong> "Erreur lors de la mise à jour du membre: Erreur inconnue"</p>
+            <p><strong>Cause probable :</strong> Échec de la fonction <code>supabaseApiService.updateUser()</code></p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Étapes de Diagnostic</h3>
+            
+            <div class="step">
+                <h4>1. Vérifier la Console du Navigateur</h4>
+                <p>Ouvrez la console (F12) et regardez les erreurs lors du changement de rôle</p>
+                <button onclick="checkConsole()">Vérifier la Console</button>
+                <div id="consoleResult" class="log"></div>
+            </div>
+
+            <div class="step">
+                <h4>2. Tester la Fonction updateUser</h4>
+                <p>Vérifier que la fonction updateUser fonctionne correctement</p>
+                <button onclick="testUpdateUser()">Tester updateUser</button>
+                <div id="updateUserResult" class="log"></div>
+            </div>
+
+            <div class="step">
+                <h4>3. Vérifier les Permissions</h4>
+                <p>Vérifier que l'utilisateur a les bonnes permissions</p>
+                <button onclick="testPermissions()">Tester les Permissions</button>
+                <div id="permissionsResult" class="log"></div>
+            </div>
+
+            <div class="step">
+                <h4>4. Vérifier la Base de Données</h4>
+                <p>Vérifier la structure des tables et les contraintes</p>
+                <button onclick="testDatabase()">Tester la Base</button>
+                <div id="databaseResult" class="log"></div>
+            </div>
+        </div>
+
+        <div class="test-section warning">
+            <h3>⚠️ Points de Vérification</h3>
+            <ul>
+                <li><strong>Console du navigateur :</strong> Regarder les erreurs JavaScript détaillées</li>
+                <li><strong>Réseau :</strong> Vérifier les appels API dans l'onglet Network</li>
+                <li><strong>Permissions :</strong> S'assurer que l'utilisateur peut modifier les rôles</li>
+                <li><strong>Base de données :</strong> Vérifier les contraintes et politiques RLS</li>
+            </ul>
+        </div>
+
+        <div class="test-section debug">
+            <h3>🐛 Code de Debug</h3>
+            <p>Ajoutez ce code temporairement dans votre composant pour plus de détails :</p>
+            <pre><code>// Dans handleUpdateMember, avant l'appel à updateUser
+console.log('🔍 Données à mettre à jour:', memberData);
+console.log('🔍 ID utilisateur:', id);
+console.log('🔍 Utilisateur actuel:', currentUser);
+
+// Après l'appel à updateUser
+console.log('✅ Mise à jour réussie');
+</code></pre>
+        </div>
+
+        <div class="test-section success">
+            <h3>🎯 Actions Recommandées</h3>
+            <ol>
+                <li><strong>Ouvrir la console</strong> et reproduire l'erreur</li>
+                <li><strong>Noter les messages d'erreur</strong> exacts</li>
+                <li><strong>Vérifier l'onglet Network</strong> pour les appels API</li>
+                <li><strong>Tester avec un utilisateur admin</strong> pour éliminer les problèmes de permissions</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            element.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function checkConsole() {
+            const resultDiv = document.getElementById('consoleResult');
+            resultDiv.innerHTML = '<div class="info">🔍 Vérification de la console...</div>';
+            
+            setTimeout(() => {
+                log('consoleResult', '✅ Ouvrez la console du navigateur (F12)', 'success');
+                log('consoleResult', '✅ Allez dans l\'onglet Console', 'success');
+                log('consoleResult', '✅ Tentez de changer le rôle d\'un utilisateur', 'success');
+                log('consoleResult', '✅ Notez tous les messages d\'erreur qui apparaissent', 'warning');
+                log('consoleResult', '⚠️ Les erreurs détaillées sont essentielles pour le diagnostic', 'warning');
+            }, 1000);
+        }
+
+        function testUpdateUser() {
+            const resultDiv = document.getElementById('updateUserResult');
+            resultDiv.innerHTML = '<div class="info">🧪 Test de la fonction updateUser...</div>';
+            
+            setTimeout(() => {
+                log('updateUserResult', '✅ Vérifiez que la fonction updateUser est appelée', 'success');
+                log('updateUserResult', '✅ Regardez les paramètres passés à la fonction', 'success');
+                log('updateUserResult', '⚠️ Vérifiez que memberData.role est correct', 'warning');
+                log('updateUserResult', '⚠️ Vérifiez que l\'ID utilisateur est valide', 'warning');
+            }, 1000);
+        }
+
+        function testPermissions() {
+            const resultDiv = document.getElementById('permissionsResult');
+            resultDiv.innerHTML = '<div class="info">🔐 Test des permissions...</div>';
+            
+            setTimeout(() => {
+                log('permissionsResult', '✅ Vérifiez que currentUser a les bonnes permissions', 'success');
+                log('permissionsResult', '✅ Vérifiez PermissionService.hasPermission()', 'success');
+                log('permissionsResult', '⚠️ Assurez-vous que l\'utilisateur peut modifier les rôles', 'warning');
+            }, 1000);
+        }
+
+        function testDatabase() {
+            const resultDiv = document.getElementById('databaseResult');
+            resultDiv.innerHTML = '<div class="info">🗄️ Test de la base de données...</div>';
+            
+            setTimeout(() => {
+                log('databaseResult', '✅ Vérifiez la structure de la table users', 'success');
+                log('databaseResult', '✅ Vérifiez les contraintes sur la colonne role', 'success');
+                log('databaseResult', '⚠️ Vérifiez les politiques RLS (Row Level Security)', 'warning');
+                log('databaseResult', '⚠️ Vérifiez que l\'utilisateur a accès à la table', 'warning');
+            }, 1000);
+        }
+
+        // Test automatique au chargement
+        window.onload = function() {
+            console.log('🔍 Diagnostic du Changement de Rôle - Page chargée');
+            console.log('✅ Ouvrez la console et reproduisez l\'erreur pour le diagnostic');
+        };
+    </script>
+</body>
+</html>

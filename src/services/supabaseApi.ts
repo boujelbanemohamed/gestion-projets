@@ -911,8 +911,12 @@ class SupabaseApiService {
   async updateUser(id: string, updates: Partial<AuthUser>): Promise<AuthUser> {
     try {
       console.log('🔄 Mise à jour de l\'utilisateur:', id, 'avec les données:', updates);
+      console.log('🔍 Type des données:', typeof updates);
+      console.log('🔍 Clés des données:', Object.keys(updates));
+      console.log('🔍 Données role:', updates.role);
       
       // 1. Mettre à jour la table public.users
+      console.log('📝 Étape 1: Mise à jour de la table public.users...');
       const { data, error } = await supabase
         .from('users')
         .update(updates)
@@ -922,12 +926,17 @@ class SupabaseApiService {
 
       if (error) {
         console.error('❌ Erreur mise à jour public.users:', error);
+        console.error('❌ Code d\'erreur:', error.code);
+        console.error('❌ Message d\'erreur:', error.message);
+        console.error('❌ Détails:', error.details);
         throw error;
       }
 
       console.log('✅ Table public.users mise à jour avec succès');
+      console.log('✅ Données retournées:', data);
 
       // 2. Synchroniser les métadonnées dans auth.users (via l'utilisateur connecté)
+      console.log('📝 Étape 2: Synchronisation des métadonnées auth.users...');
       const metadataUpdates: any = {};
       if (updates.nom) metadataUpdates.nom = updates.nom;
       if (updates.prenom) metadataUpdates.prenom = updates.prenom;
@@ -935,21 +944,29 @@ class SupabaseApiService {
       if (updates.fonction) metadataUpdates.fonction = updates.fonction;
       if (updates.departement_id) metadataUpdates.departement_id = updates.departement_id;
 
+      console.log('🔍 Métadonnées à synchroniser:', metadataUpdates);
+      console.log('🔍 Nombre de métadonnées:', Object.keys(metadataUpdates).length);
+
       if (Object.keys(metadataUpdates).length > 0) {
         console.log('🔄 Mise à jour des métadonnées auth.users:', metadataUpdates);
         
         // Utiliser l'API publique au lieu de l'API admin
+        console.log('🔐 Appel de supabase.auth.updateUser...');
         const { error: authError } = await supabase.auth.updateUser({
           data: metadataUpdates
         });
         
         if (authError) {
           console.error('❌ Erreur mise à jour métadonnées auth.users:', authError);
+          console.error('❌ Code d\'erreur auth:', authError.code);
+          console.error('❌ Message d\'erreur auth:', authError.message);
           // Ne pas faire échouer la mise à jour si la synchronisation auth échoue
           console.warn('⚠️ Synchronisation auth.users échouée, mais public.users mise à jour');
         } else {
           console.log('✅ Métadonnées auth.users mises à jour avec succès');
         }
+      } else {
+        console.log('ℹ️ Aucune métadonnée à synchroniser');
       }
 
       // 3. Mettre à jour le mot de passe si fourni (via l'utilisateur connecté)
