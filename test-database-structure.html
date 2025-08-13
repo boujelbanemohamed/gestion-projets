@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗄️ Test Structure Base de Données</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗄️ Test Structure Base de Données</h1>
+        
+        <div class="test-section info">
+            <h3>📋 Objectif</h3>
+            <p>Vérifier que la structure de la base de données est correcte et que les contraintes sont respectées.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Tests à Effectuer</h3>
+            
+            <div class="test-section">
+                <h4>1. Vérifier la Table users</h4>
+                <p>Exécuter cette requête SQL dans Supabase :</p>
+                <pre><code>-- Vérifier la structure de la table users
+SELECT 
+    column_name,
+    data_type,
+    is_nullable,
+    column_default
+FROM information_schema.columns 
+WHERE table_name = 'users' 
+ORDER BY ordinal_position;
+
+-- Vérifier les contraintes CHECK
+SELECT 
+    constraint_name,
+    check_clause
+FROM information_schema.check_constraints 
+WHERE constraint_name LIKE '%users%';
+
+-- Vérifier les contraintes de clé primaire et unique
+SELECT 
+    tc.constraint_name,
+    tc.constraint_type,
+    kcu.column_name
+FROM information_schema.table_constraints tc
+JOIN information_schema.key_column_usage kcu 
+    ON tc.constraint_name = kcu.constraint_name
+WHERE tc.table_name = 'users';
+
+-- Vérifier les valeurs uniques dans la colonne role
+SELECT DISTINCT role FROM users;</code></pre>
+            </div>
+
+            <div class="test-section">
+                <h4>2. Vérifier les Politiques RLS</h4>
+                <p>Exécuter cette requête pour vérifier les politiques de sécurité :</p>
+                <pre><code>-- Vérifier les politiques RLS sur la table users
+SELECT 
+    schemaname,
+    tablename,
+    policyname,
+    permissive,
+    roles,
+    cmd,
+    qual,
+    with_check
+FROM pg_policies 
+WHERE tablename = 'users';</code></pre>
+            </div>
+
+            <div class="test-section">
+                <h4>3. Test de Mise à Jour Simple</h4>
+                <p>Tester une mise à jour directe dans Supabase :</p>
+                <pre><code>-- Test de mise à jour (remplacez [USER_ID] par un vrai ID)
+UPDATE users 
+SET role = 'MANAGER' 
+WHERE id = '[USER_ID]'
+RETURNING *;</code></pre>
+            </div>
+        </div>
+
+        <div class="test-section warning">
+            <h3>⚠️ Problèmes Possibles</h3>
+            <ul>
+                <li><strong>Contraintes CHECK</strong> : La colonne role peut avoir des contraintes qui limitent les valeurs</li>
+                <li><strong>Politiques RLS</strong> : Les politiques peuvent bloquer les mises à jour</li>
+                <li><strong>Types de données</strong> : Le type de la colonne role peut être incorrect</li>
+                <li><strong>Permissions</strong> : L'utilisateur connecté peut ne pas avoir les bonnes permissions</li>
+            </ul>
+        </div>
+
+        <div class="test-section success">
+            <h3>🎯 Résultat Attendu</h3>
+            <p>Après ces tests, nous devrions identifier :</p>
+            <ul>
+                <li>Si la colonne role accepte bien les valeurs 'MANAGER', 'USER', etc.</li>
+                <li>Si des politiques RLS bloquent l'opération</li>
+                <li>Si des contraintes de base de données empêchent la mise à jour</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Instructions</h3>
+            <ol>
+                <li><strong>Ouvrir Supabase Dashboard</strong> → SQL Editor</li>
+                <li><strong>Exécuter les requêtes</strong> une par une</li>
+                <li><strong>Noter les résultats</strong> et les erreurs</li>
+                <li><strong>Partager les résultats</strong> pour analyse</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        console.log('🗄️ Test Structure Base de Données - Page chargée');
+        console.log('✅ Exécutez les requêtes SQL dans Supabase Dashboard');
+    </script>
+</body>
+</html>

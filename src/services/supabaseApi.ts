@@ -916,10 +916,38 @@ class SupabaseApiService {
       console.log('🔍 Données role:', updates.role);
       
       // 1. Mettre à jour la table public.users
-      console.log('📝 Étape 1: Mise à jour de la table public.users...');
+      console.log('📝 Étape 1: Préparation du payload de mise à jour...');
+      // Ne garder que les colonnes modifiables, éviter les payloads vides ou champs inconnus
+      const allowedColumns = new Set(['nom', 'prenom', 'role', 'fonction', 'departement_id']);
+      const sanitizedUpdates: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === undefined) continue;
+        if (allowedColumns.has(key)) sanitizedUpdates[key] = value;
+      }
+
+      if (Object.keys(sanitizedUpdates).length === 0) {
+        console.warn('⚠️ Aucune donnée valide à mettre à jour. Lecture et retour du profil courant.');
+        const { data: current } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        return (current as unknown) as AuthUser;
+      }
+
+      // Normaliser et valider le rôle (enum côté DB)
+      if (sanitizedUpdates.role) {
+        const roleValue = String(sanitizedUpdates.role).toUpperCase();
+        if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER'].includes(roleValue)) {
+          throw new Error(`Rôle invalide fourni: ${sanitizedUpdates.role as string}`);
+        }
+        sanitizedUpdates.role = roleValue as AuthUser['role'];
+      }
+
+      console.log('📝 Payload final envoyé à public.users:', sanitizedUpdates);
       const { data, error } = await supabase
         .from('users')
-        .update(updates)
+        .update(sanitizedUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -929,6 +957,13 @@ class SupabaseApiService {
         console.error('❌ Code d\'erreur:', error.code);
         console.error('❌ Message d\'erreur:', error.message);
         console.error('❌ Détails:', error.details);
+        console.error('❌ Hint:', error.hint);
+        console.error('❌ Erreur complète:', JSON.stringify(error, null, 2));
+        
+        // Log des données envoyées pour debug
+        console.error('🔍 Données envoyées qui ont causé l\'erreur:', updates);
+        console.error('🔍 ID utilisateur cible:', id);
+        
         throw error;
       }
 
