@@ -50,6 +50,12 @@ export async function connectDatabase() {
       logger.info('🛠️ Running database migrations...');
       await db.migrate.latest();
       logger.info('✅ Database migrations completed');
+
+      if (process.env.RUN_SEEDS === 'true') {
+        logger.info('🌱 Running seeds...');
+        await db.seed.run();
+        logger.info('✅ Seeds completed');
+      }
     } else {
       logger.info('⏭️ Skipping migrations (RUN_MIGRATIONS != true)');
     }
