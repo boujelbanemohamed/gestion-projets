@@ -4,7 +4,7 @@
 
 [build.environment]
   # Ces variables seront remplacées par les variables d'environnement Netlify
-  VITE_USE_SUPABASE = "true"
+  VITE_USE_SUPABASE = "false"
   VITE_USE_MOCK_DATA = "false"
 
 [[redirects]]
@@ -19,7 +19,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://obdadipsbbrlwetkuyui.supabase.co;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://gestionprojetsmt.onrender.com https://obdadipsbbrlwetkuyui.supabase.co wss:;"
 
 [[headers]]
   for = "/assets/*"
