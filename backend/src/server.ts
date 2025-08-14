@@ -114,6 +114,9 @@ app.use('*', (req, res) => {
 // Start server
 async function startServer() {
   try {
+    logger.info(
+      `🧩 Preparing DB connection with env → host=${process.env.DB_HOST}, port=${process.env.DB_PORT}, user=${process.env.DB_USER}, db=${process.env.DB_NAME}`
+    );
     await connectDatabase();
     
     server.listen(PORT, () => {
