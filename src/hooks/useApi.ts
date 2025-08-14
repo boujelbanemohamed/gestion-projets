@@ -45,3 +45,4 @@ export const isMockDataEnabled = () => {
 }
 
 export default useApi
+console.log('env', import.meta.env.VITE_USE_SUPABASE, import.meta.env.VITE_API_URL);
