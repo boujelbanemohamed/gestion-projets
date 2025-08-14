@@ -3,16 +3,17 @@ import { supabaseApiService } from '../services/supabaseApi'
 import { mockDataService } from '../services/mockDataService'
 
 // Détermine quel service API utiliser
-// En production, on force la désactivation du mode mock pour garantir la persistance
+// 1) En production: jamais de mock
+// 2) Priorité: Backend (Render) si VITE_USE_SUPABASE !== 'true'
 const isProd = import.meta.env.PROD
 const envUseSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
 const envUseMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 const localMock = typeof window !== 'undefined' && localStorage.getItem('useMockData') === 'true'
 const useMockData = isProd ? false : (envUseMock || localMock)
-const useSupabase = envUseSupabase && !useMockData
+const useSupabase = !useMockData && envUseSupabase
 
 export const useApi = () => {
-  // Priorité : Mock Data > Supabase > Backend local
+  // Priorité : Mock Data > Supabase > Backend (Render)
   if (useMockData) {
     console.log('🎭 Utilisation des données mockées')
     return mockDataService
@@ -23,7 +24,7 @@ export const useApi = () => {
     return supabaseApiService
   }
 
-  console.log('⚙️ Utilisation du backend local')
+  console.log('⚙️ Utilisation du backend (Render)')
   return apiService
 }
 
