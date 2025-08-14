@@ -1,55 +1,31 @@
-# Multi-stage build for production
-FROM node:18-alpine AS builder
+# Single-stage image using Node 20 and ts-node at runtime (no TypeScript build)
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Install dependencies (including dev for ts-node)
 COPY package*.json ./
-COPY tsconfig.json ./
-
-# Install dependencies (include dev deps for TypeScript build)
 RUN npm ci && npm cache clean --force
 
-# Copy source code
-COPY src/ ./src/
-
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM node:18-alpine AS production
-
-WORKDIR /app
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# Copy package files
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
-
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/seeds ./seeds
+# Copy app files
+COPY tsconfig.json ./
 COPY knexfile.js ./
+COPY migrations ./migrations
+COPY seeds ./seeds
+COPY src ./src
 
-# Create logs directory
+# Create runtime dirs
 RUN mkdir -p logs uploads && \
+    addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 && \
     chown -R nodejs:nodejs /app
 
-# Switch to non-root user
 USER nodejs
 
-# Expose port
 EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Start the application
-CMD ["node", "dist/server.js"]
+# Start the application with ts-node transpile-only
+CMD ["node", "-r", "ts-node/register/transpile-only", "src/server.ts"]
