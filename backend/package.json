@@ -43,6 +43,7 @@
     "socket.io": "^4.8.1",
     "uuid": "^9.0.1",
     "winston": "^3.17.0"
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
