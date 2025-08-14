@@ -440,12 +440,13 @@ class SupabaseApiService {
     titre: string,
     date_reunion: string,
     description: string,
-    projectIds: string[]
+    projectIds: Array<string | number>
   ): Promise<{ meetingMinutes: MeetingMinutes }> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Utilisateur non authentifié')
 
     // Créer le PV
+    console.log('📝 Création PV: payload', { titre, date_reunion, description });
     const { data: mmData, error: mmError } = await supabase
       .from('meeting_minutes')
       .insert({
@@ -459,20 +460,36 @@ class SupabaseApiService {
       .select()
       .single()
 
-    if (mmError) throw new Error(mmError.message)
+    if (mmError) {
+      console.error('❌ Erreur création meeting_minutes:', mmError);
+      // Exposer plus d'infos pour debug
+      // @ts-expect-error SupabaseError extra fields
+      console.error('code:', mmError.code, 'details:', mmError.details, 'hint:', mmError.hint);
+      throw new Error(mmError.message);
+    }
 
     // Associer aux projets
-    if (projectIds.length > 0) {
+    const normalizedProjectIds = (projectIds || [])
+      .map((pid) => pid)
+      .filter((pid) => pid !== undefined && pid !== null && String(pid).length > 0);
+
+    if (normalizedProjectIds.length > 0) {
+      console.log('🔗 Association projets → PV:', normalizedProjectIds);
       const { error: linkError } = await supabase
         .from('meeting_minutes_projects')
         .insert(
-          projectIds.map(projectId => ({
+          normalizedProjectIds.map((projectId) => ({
             meeting_minute_id: mmData.id,
-            project_id: parseInt(projectId),
+            project_id: projectId,
           }))
         )
 
-      if (linkError) throw new Error(linkError.message)
+      if (linkError) {
+        console.error('❌ Erreur association meeting_minutes_projects:', linkError);
+        // @ts-expect-error SupabaseError extra fields
+        console.error('code:', linkError.code, 'details:', linkError.details, 'hint:', linkError.hint);
+        throw new Error(linkError.message);
+      }
     }
 
     // Récupérer le PV complet avec les projets
