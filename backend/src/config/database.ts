@@ -45,13 +45,13 @@ export async function connectDatabase() {
     );
     
     // Run migrations conditionnellement
-    const shouldRunMigrations = process.env.RUN_MIGRATIONS === 'true' || process.env.NODE_ENV !== 'production';
+    const shouldRunMigrations = process.env.RUN_MIGRATIONS === 'true';
     if (shouldRunMigrations) {
       logger.info('🛠️ Running database migrations...');
       await db.migrate.latest();
       logger.info('✅ Database migrations completed');
     } else {
-      logger.info('⏭️ Skipping migrations (RUN_MIGRATIONS != true in production)');
+      logger.info('⏭️ Skipping migrations (RUN_MIGRATIONS != true)');
     }
     
   } catch (error) {
