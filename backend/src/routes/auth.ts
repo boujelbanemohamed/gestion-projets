@@ -75,7 +75,8 @@ router.post('/register', async (req, res) => {
       token
     });
   } catch (error) {
-    logger.error('Registration error:', error);
+    logger.error('Registration error:', error as any);
+    console.error('Registration error:', error);
     return res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });
@@ -98,6 +99,12 @@ router.post('/login', async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+    }
+
+    // Vérifie la présence du hash
+    if (!user.password_hash) {
+      logger.warn(`Login attempt for ${email} but password_hash is missing`);
+      return res.status(400).json({ error: 'Ce compte n’a pas de mot de passe défini. Veuillez vous inscrire ou réinitialiser le mot de passe.' });
     }
 
     // Verify password
@@ -124,7 +131,8 @@ router.post('/login', async (req, res) => {
       token
     });
   } catch (error) {
-    logger.error('Login error:', error);
+    logger.error('Login error:', error as any);
+    console.error('Login error:', error);
     return res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });
@@ -191,7 +199,8 @@ router.put('/password', authenticateToken, async (req: AuthRequest, res) => {
 
     return res.json({ message: 'Mot de passe mis à jour avec succès' });
   } catch (error) {
-    logger.error('Update password error:', error);
+    logger.error('Update password error:', error as any);
+    console.error('Update password error:', error);
     return res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });
