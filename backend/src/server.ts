@@ -30,7 +30,7 @@ import { setupSocketHandlers } from './sockets/handlers';
 
 dotenv.config();
 
-console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
+console.log("DB_PASSWORD (raw):", JSON.stringify(process.env.DB_PASSWORD));
 
 const app = express();
 const server = createServer(app);
@@ -116,34 +116,28 @@ app.use('*', (req, res) => {
 // Start server
 async function startServer() {
   try {
-    // 1) Démarrer le serveur immédiatement pour éviter qu'il ne soit tué avant les logs
+    // 1) Start server early
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
     });
 
-    // 2) Puis tenter la connexion DB de façon asynchrone, avec logs détaillés
+    // 2) Log DB connection info (mask password)
     const dbHost = process.env.DB_HOST;
     const dbPort = process.env.DB_PORT;
     const dbUser = process.env.DB_USER;
     const dbName = process.env.DB_NAME;
+    const maskedPassword = process.env.DB_PASSWORD ? process.env.DB_PASSWORD.replace(/./g, '*') : '';
     logger.info(
-      `🧩 Preparing DB connection with env → host=${dbHost}, port=${dbPort}, user=${dbUser}, db=${dbName}`
+      `🧩 Preparing DB connection with env → host=${dbHost}, port=${dbPort}, user=${dbUser}, password=${maskedPassword}, db=${dbName}`
     );
 
-    connectDatabase()
-      .then(() => {
-        logger.info('✅ Database connected successfully (async)');
-      })
-      .catch((err) => {
-        logger.error('❌ Database connection failed (non-blocking):', err);
-        console.error('❌ Database connection failed (non-blocking):', err);
-      });
+    await connectDatabase();
+    logger.info('✅ Database connected successfully (async)');
   } catch (error) {
-    logger.error('Failed to start server (runtime):', error);
-    console.error('Failed to start server (runtime):', error);
-    process.exit(1);
+    logger.error('❌ Database connection failed (non-blocking):', error);
+    console.error('❌ Database connection failed (non-blocking):', error);
   }
 }
 
