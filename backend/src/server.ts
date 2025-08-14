@@ -30,6 +30,8 @@ import { setupSocketHandlers } from './sockets/handlers';
 
 dotenv.config();
 
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
