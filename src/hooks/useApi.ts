@@ -10,7 +10,8 @@ const envUseSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
 const envUseMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 const localMock = typeof window !== 'undefined' && localStorage.getItem('useMockData') === 'true'
 const useMockData = isProd ? false : (envUseMock || localMock)
-const useSupabase = !useMockData && envUseSupabase
+// En production, on force l'API backend quoi qu'il arrive
+const useSupabase = !isProd && !useMockData && envUseSupabase
 
 export const useApi = () => {
   // Priorité : Mock Data > Supabase > Backend (Render)
