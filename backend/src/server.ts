@@ -33,6 +33,8 @@ dotenv.config();
 console.log("DB_PASSWORD (raw):", JSON.stringify(process.env.DB_PASSWORD));
 
 const app = express();
+// pour que le rate-limit et CORS voient la bonne IP derrière Cloudflare/Render
+app.set('trust proxy', 1);
 const server = createServer(app);
 const allowedOriginsString = process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5173";
 const allowedOrigins = allowedOriginsString.split(',').map(o => o.trim());
