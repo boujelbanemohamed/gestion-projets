@@ -3,6 +3,7 @@ import { Database, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 
 const SupabaseStatusIndicator: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'connected' | 'disconnected'>('loading');
+  const [backendStatus, setBackendStatus] = useState<'loading' | 'connected' | 'disconnected'>('loading');
   const [useSupabase, setUseSupabase] = useState(false);
 
   useEffect(() => {
@@ -19,6 +20,20 @@ const SupabaseStatusIndicator: React.FC = () => {
 
       if (!useSupabaseEnv) {
         setStatus('disconnected');
+        // Vérifier aussi le backend quand Supabase est désactivé
+        try {
+          setBackendStatus('loading');
+          const apiBaseUrl = import.meta.env.VITE_API_URL;
+          if (apiBaseUrl) {
+            const healthUrl = `${apiBaseUrl.replace(/\/$/, '')}/health`;
+            const res = await fetch(healthUrl);
+            setBackendStatus(res.ok ? 'connected' : 'disconnected');
+          } else {
+            setBackendStatus('disconnected');
+          }
+        } catch (e) {
+          setBackendStatus('disconnected');
+        }
         return;
       }
 
@@ -51,11 +66,27 @@ const SupabaseStatusIndicator: React.FC = () => {
 
   const getStatusInfo = () => {
     if (!useSupabase) {
+      if (backendStatus === 'loading') {
+        return {
+          icon: <Loader size={16} className="text-blue-500 animate-spin" />,
+          text: 'Backend…',
+          bgColor: 'bg-blue-100',
+          textColor: 'text-blue-700'
+        };
+      }
+      if (backendStatus === 'connected') {
+        return {
+          icon: <CheckCircle size={16} className="text-green-500" />,
+          text: 'Backend OK',
+          bgColor: 'bg-green-100',
+          textColor: 'text-green-700'
+        };
+      }
       return {
-        icon: <Database size={16} className="text-gray-500" />,
-        text: 'Mode Local',
-        bgColor: 'bg-gray-100',
-        textColor: 'text-gray-700'
+        icon: <AlertCircle size={16} className="text-red-500" />,
+        text: 'Backend KO',
+        bgColor: 'bg-red-100',
+        textColor: 'text-red-700'
       };
     }
 
