@@ -3,6 +3,12 @@ import { AuthUser, Project, Task, User, Department, Comment } from '../types';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const USE_SUPABASE = import.meta.env.VITE_USE_SUPABASE === 'true';
 
+console.log('🔧 API Config:', {
+  baseUrl: API_BASE_URL,
+  useSupabase: USE_SUPABASE,
+  env: import.meta.env.MODE
+});
+
 class ApiService {
   private token: string | null = null;
 

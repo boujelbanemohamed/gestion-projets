@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: gestionprojet-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: gestionprojet-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: gestionprojet-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: gestionprojet-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: gestionprojet-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: gestionprojet-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://your-netlify-app.netlify.app
+      - key: ALLOWED_ORIGINS
+        value: https://your-netlify-app.netlify.app,http://localhost:5173
+      - key: RUN_MIGRATIONS
+        value: true
+      - key: RUN_SEEDS
+        value: false
+
+databases:
+  - name: gestionprojet-db
+    databaseName: gestionprojet
+    user: gestionprojet_user
+    plan: free
