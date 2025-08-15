@@ -640,6 +640,78 @@ class SupabaseApiService {
     return data || []
   }
 
+  // Départements (Supabase)
+  async getDepartments(): Promise<{ departments: { id: string; nom: string; description?: string; created_at: string; updated_at?: string }[] }> {
+    const { data, error } = await supabase
+      .from('departments')
+      .select('*')
+      .order('nom', { ascending: true })
+
+    if (error) throw new Error(error.message)
+
+    const departments = (data || []).map((d: any) => ({
+      id: d.id,
+      nom: d.nom,
+      description: d.description ?? undefined,
+      created_at: d.created_at,
+      updated_at: d.updated_at ?? undefined,
+    }))
+
+    return { departments }
+  }
+
+  async createDepartment(payload: { nom: string; description?: string }): Promise<{ department: { id: string; nom: string; description?: string; created_at: string } }> {
+    const { data, error } = await supabase
+      .from('departments')
+      .insert({
+        nom: payload.nom,
+        description: payload.description,
+      })
+      .select('*')
+      .single()
+
+    if (error) throw new Error(error.message)
+
+    return {
+      department: {
+        id: (data as any).id,
+        nom: (data as any).nom,
+        description: (data as any).description ?? undefined,
+        created_at: (data as any).created_at,
+      },
+    }
+  }
+
+  async updateDepartment(id: string, payload: { nom?: string; description?: string }): Promise<{ department: { id: string; nom: string; description?: string; created_at: string } }> {
+    const { data, error } = await supabase
+      .from('departments')
+      .update(payload)
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new Error(error.message)
+
+    return {
+      department: {
+        id: (data as any).id,
+        nom: (data as any).nom,
+        description: (data as any).description ?? undefined,
+        created_at: (data as any).created_at,
+      },
+    }
+  }
+
+  async deleteDepartment(id: string): Promise<{ message: string }> {
+    const { error } = await supabase
+      .from('departments')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw new Error(error.message)
+    return { message: 'Département supprimé avec succès' }
+  }
+
   async markNotificationAsRead(id: number): Promise<void> {
     const { error } = await supabase
       .from('notifications')
