@@ -129,3 +129,5 @@ SELECT
   'Vous pouvez maintenant exécuter les scripts de synchronisation' as next_step;
 
 
+
+

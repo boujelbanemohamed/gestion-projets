@@ -15,21 +15,30 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     const isAuthEndpoint = endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register');
     const shouldAttachAuth = !!this.token && !isAuthEndpoint;
 
+    const isFormData = options.body instanceof FormData;
+
+    const mergedHeaders: Record<string, string> = {
+      ...(shouldAttachAuth ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...(options.headers as Record<string, string> | undefined),
+    };
+
+    if (!isFormData) {
+      if (!mergedHeaders['Content-Type']) {
+        mergedHeaders['Content-Type'] = 'application/json';
+      }
+    }
+
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(shouldAttachAuth && { Authorization: `Bearer ${this.token}` }),
-        ...options.headers,
-      },
       ...options,
+      headers: mergedHeaders,
     };
 
     console.log('📡 Making request to:', url);
-    console.log('⚙️ Request config:', { ...config, body: config.body instanceof FormData ? 'FormData' : config.body });
+    console.log('⚙️ Request config:', { ...config, body: isFormData ? 'FormData' : config.body });
 
     const response = await fetch(url, config);
     console.log('📨 Response status:', response.status, response.statusText);

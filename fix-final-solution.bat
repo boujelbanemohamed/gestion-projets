@@ -60,3 +60,5 @@ echo 🎯 Cette solution est definitive et respecte toutes les contraintes !
 pause
 
 
+
+

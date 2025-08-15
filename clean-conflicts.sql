@@ -88,3 +88,5 @@ LEFT JOIN public.users pu ON au.id = au.id
 WHERE pu.id IS NULL;
 
 
+
+

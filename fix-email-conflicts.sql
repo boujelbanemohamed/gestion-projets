@@ -69,3 +69,5 @@ FROM auth.users au
 INNER JOIN public.users pu ON au.id = pu.id;
 
 
+
+

@@ -152,3 +152,5 @@ FROM public.tasks
 WHERE created_by = (SELECT id FROM auth.users WHERE email = 'mohamed.boujelbane@icloud.com');
 
 
+
+

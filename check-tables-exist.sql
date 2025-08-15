@@ -120,3 +120,5 @@ SELECT
   '3. Puis exécutez les scripts de synchronisation' as next_step;
 
 
+
+
