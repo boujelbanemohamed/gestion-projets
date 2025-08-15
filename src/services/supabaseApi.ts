@@ -236,10 +236,10 @@ class SupabaseApiService {
     )
 
     if (needsSync) {
-      console.log('⚠️ Métadonnées auth.users désynchronisées, synchronisation...')
+      console.log('⚠️ Métadonnées auth.users désynchronisées, synchronisation via client...')
       try {
-        await supabase.auth.admin.updateUserById(user.id, {
-          user_metadata: {
+        const { error: authError } = await supabase.auth.updateUser({
+          data: {
             nom: profile.nom,
             prenom: profile.prenom,
             role: profile.role,
@@ -247,9 +247,13 @@ class SupabaseApiService {
             departement_id: profile.departement_id,
           }
         })
-        console.log('✅ Métadonnées auth.users synchronisées')
+        if (authError) {
+          console.warn('⚠️ Échec sync métadonnées (non bloquant):', authError)
+        } else {
+          console.log('✅ Métadonnées auth.users synchronisées (client)')
+        }
       } catch (syncError) {
-        console.warn('⚠️ Erreur synchronisation métadonnées:', syncError)
+        console.warn('⚠️ Erreur synchronisation métadonnées (client):', syncError)
       }
     }
 
