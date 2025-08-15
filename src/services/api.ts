@@ -16,10 +16,13 @@ class ApiService {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    const isAuthEndpoint = endpoint.startsWith('/auth/login') || endpoint.startsWith('/auth/register');
+    const shouldAttachAuth = !!this.token && !isAuthEndpoint;
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+        ...(shouldAttachAuth && { Authorization: `Bearer ${this.token}` }),
         ...options.headers,
       },
       ...options,
