@@ -30,8 +30,6 @@ import { setupSocketHandlers } from './sockets/handlers';
 
 dotenv.config();
 
-console.log("DB_PASSWORD (raw):", JSON.stringify(process.env.DB_PASSWORD));
-
 const app = express();
 // pour que le rate-limit et CORS voient la bonne IP derrière Cloudflare/Render
 app.set('trust proxy', 1);

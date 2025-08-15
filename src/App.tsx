@@ -353,13 +353,8 @@ function App() {
     try {
       console.log('👤 Création d\'un nouveau membre:', memberData.email);
       
-      // Vérifier si l'utilisateur existe déjà dans Supabase Auth
-      const { data: existingUser } = await supabase.auth.admin.getUserByEmail(memberData.email);
-      
-      if (existingUser.user) {
-        alert('Un utilisateur avec cet email existe déjà dans le système d\'authentification');
-        return;
-      }
+      // Ne pas utiliser l'API admin côté navigateur (clé service requise)
+      // La vérification d'existence sera gérée par la création (erreur si doublon)
 
       // Créer l'utilisateur dans Supabase Auth ET dans la table custom users
       const { user, token } = await supabaseApiService.createUser({
