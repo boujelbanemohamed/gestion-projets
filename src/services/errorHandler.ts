@@ -203,7 +203,8 @@ export class APIValidationService {
   }
   
   static async validateBackendConnection(): Promise<boolean> {
-    return await this.validateEndpoint('http://localhost:3000/api/health');
+    const base = (import.meta.env.VITE_API_URL || 'https://gestion-projets-tdes.onrender.com/api').replace(/\/$/, '');
+    return await this.validateEndpoint(`${base}/health`);
   }
 }
 
