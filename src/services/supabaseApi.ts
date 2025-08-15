@@ -161,41 +161,8 @@ class SupabaseApiService {
       console.log('✅ Profil créé manuellement dans users:', profile)
     }
 
-    // 3. Vérifier que la synchronisation est parfaite
-    try {
-      const { data: { user: authUser } } = await supabase.auth.admin.getUserById(authData.user.id)
-      if (authUser) {
-        console.log('🔍 Vérification des métadonnées auth.users:', authUser.user_metadata)
-        
-        // Vérifier si les métadonnées sont correctes
-        const metadata = authUser.user_metadata || {}
-        const isSynced = (
-          metadata.nom === userData.nom &&
-          metadata.prenom === userData.prenom &&
-          metadata.role === (userData.role || 'USER') &&
-          metadata.fonction === userData.fonction &&
-          metadata.departement_id === userData.departement_id
-        )
-        
-        if (!isSynced) {
-          console.log('⚠️ Métadonnées non synchronisées, correction...')
-          await supabase.auth.admin.updateUserById(authData.user.id, {
-            user_metadata: {
-              nom: userData.nom,
-              prenom: userData.prenom,
-              role: userData.role || 'USER',
-              fonction: userData.fonction,
-              departement_id: userData.departement_id,
-            }
-          })
-          console.log('✅ Métadonnées corrigées')
-        } else {
-          console.log('✅ Métadonnées parfaitement synchronisées')
-        }
-      }
-    } catch (verifyError) {
-      console.warn('⚠️ Impossible de vérifier la synchronisation:', verifyError)
-    }
+    // 3. Ne pas utiliser l'API admin côté navigateur (nécessite une clé service non exposable)
+    // La synchronisation de métadonnées sera gérée côté serveur si besoin
 
     // 4. Retourner l'utilisateur
     const authUser: AuthUser = {
