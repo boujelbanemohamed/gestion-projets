@@ -6,7 +6,7 @@
   # Ces variables seront remplacées par les variables d'environnement Netlify
   VITE_USE_SUPABASE = "false"
   VITE_USE_MOCK_DATA = "false"
-  VITE_API_URL = "https://gestionprojetsmt.onrender.com/api"
+  VITE_API_URL = "https://gestion-projets-tdes.onrender.com/api"
 
 [[redirects]]
   from = "/*"
@@ -20,7 +20,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://gestionprojetsmt.onrender.com https://obdadipsbbrlwetkuyui.supabase.co wss:;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://gestion-projets-tdes.onrender.com https://obdadipsbbrlwetkuyui.supabase.co wss:;"
 
 [[headers]]
   for = "/assets/*"
