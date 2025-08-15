@@ -4,9 +4,11 @@
 
 [build.environment]
   # Ces variables seront remplacées par les variables d'environnement Netlify
-  VITE_USE_SUPABASE = "false"
+  VITE_USE_SUPABASE = "true"
   VITE_USE_MOCK_DATA = "false"
   VITE_API_URL = "https://gestion-projets-tdes.onrender.com/api"
+  VITE_SUPABASE_URL = "https://obdadipsbbrlwetkuyui.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iZGFkaXBzYmJybHdldGt1eXVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ0ODgxMjMsImV4cCI6MjA3MDA2NDEyM30.jracnTOp7Y0QBTbt7qjY4076aBqh3pq7DR-rU_U33fo"
 
 [[redirects]]
   from = "/*"

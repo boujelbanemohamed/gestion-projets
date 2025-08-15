@@ -196,8 +196,42 @@ function App() {
       loadUsers();
       loadDepartments();
       loadProjects();
+
+      // Activer les subscriptions temps réel
+      setupRealtimeSubscriptions();
     }
   }, [currentUser]);
+
+  // Subscriptions temps réel pour la dynamicité complète
+  const setupRealtimeSubscriptions = () => {
+    console.log('🔄 Activation des subscriptions temps réel...');
+
+    // Subscription aux changements de projets
+    const projectsSubscription = api.subscribeToProjects?.((payload: any) => {
+      console.log('📊 Changement projet détecté:', payload);
+      // Rechargement automatique avec délai pour éviter les appels multiples
+      setTimeout(() => loadProjects(), 1000);
+    });
+
+    // Subscription aux changements d'utilisateurs
+    const usersSubscription = api.subscribeToUsers?.((payload: any) => {
+      console.log('👥 Changement utilisateur détecté:', payload);
+      setTimeout(() => loadUsers(), 1000);
+    });
+
+    // Subscription aux changements de départements
+    const departmentsSubscription = api.subscribeToDepartments?.((payload: any) => {
+      console.log('🏢 Changement département détecté:', payload);
+      setTimeout(() => loadDepartments(), 1000);
+    });
+
+    // Cleanup des subscriptions
+    return () => {
+      projectsSubscription?.unsubscribe?.();
+      usersSubscription?.unsubscribe?.();
+      departmentsSubscription?.unsubscribe?.();
+    };
+  };
 
   // Get accessible projects based on user role
   const getAccessibleProjects = () => {
@@ -236,7 +270,7 @@ function App() {
     ));
   };
 
-  const handleCreateProject = (projectData: {
+  const handleCreateProject = async (projectData: {
     nom: string;
     description?: string;
     responsable_id?: string;
@@ -251,55 +285,73 @@ function App() {
     attachments?: File[];
   }) => {
     if (!PermissionService.hasPermission(currentUser, 'projects', 'create')) {
-      alert('Vous n\'avez pas les permissions pour créer un projet');
+      showToast('Vous n\'avez pas les permissions pour créer un projet', 'error');
       return;
     }
 
-    const newProject: Project = {
-      id: Date.now().toString(),
-      nom: projectData.nom,
-      type_projet: projectData.type_projet,
-      budget_initial: projectData.budget_initial,
-      devise: projectData.devise,
-      description: projectData.description,
-      responsable_id: projectData.responsable_id,
-      prestataire_externe: projectData.prestataire_externe,
-      nouvelles_fonctionnalites: projectData.nouvelles_fonctionnalites,
-      avantages: projectData.avantages,
-      departement: projectData.departement,
-      date_debut: projectData.dateDebut,
-      date_fin: projectData.dateFin,
-      created_at: new Date(),
-      updated_at: new Date(),
-      taches: [],
-      attachments: projectData.attachments ? projectData.attachments.map(file => ({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        nom: file.name,
-        taille: file.size,
-        type: file.type,
-        url: URL.createObjectURL(file),
-        uploaded_at: new Date(),
-        uploaded_by: currentUser!
-      })) : undefined
-    };
-    setProjects(prev => [...prev, newProject]);
+    try {
+      console.log('🚀 Création projet via API:', projectData.nom);
+
+      // Appel API dynamique pour créer le projet
+      const { project } = await api.createProject({
+        nom: projectData.nom,
+        description: projectData.description || '',
+        statut: 'planifie',
+        date_debut: projectData.dateDebut?.toISOString().split('T')[0],
+        date_fin: projectData.dateFin?.toISOString().split('T')[0],
+        budget: projectData.budget_initial || 0,
+        created_by: currentUser!.id
+      });
+
+      console.log('✅ Projet créé avec succès:', project);
+
+      // Recharger automatiquement la liste des projets
+      await loadProjects();
+
+      showToast('Projet créé avec succès !', 'success', 4000);
+
+    } catch (error: any) {
+      console.error('❌ Erreur création projet:', error);
+      showToast(`Erreur lors de la création : ${error.message}`, 'error');
+    }
   };
 
-  const handleUpdateProject = (updatedProject: Project) => {
+  const handleUpdateProject = async (updatedProject: Project) => {
     if (!PermissionService.hasPermission(currentUser, 'projects', 'edit')) {
-      alert('Vous n\'avez pas les permissions pour modifier ce projet');
+      showToast('Vous n\'avez pas les permissions pour modifier ce projet', 'error');
       return;
     }
 
-    setProjects(prev => 
-      prev.map(project => 
-        project.id === updatedProject.id ? updatedProject : project
-      )
-    );
-    setSelectedProject(updatedProject);
+    try {
+      console.log('🔄 Mise à jour projet via API:', updatedProject.id);
+
+      // Appel API dynamique pour mettre à jour le projet
+      const { project } = await api.updateProject(updatedProject.id, {
+        nom: updatedProject.nom,
+        description: updatedProject.description,
+        statut: updatedProject.statut,
+        date_debut: updatedProject.date_debut?.toISOString?.()?.split('T')[0],
+        date_fin: updatedProject.date_fin?.toISOString?.()?.split('T')[0],
+        budget: updatedProject.budget_initial || 0
+      });
+
+      console.log('✅ Projet mis à jour avec succès:', project);
+
+      // Recharger automatiquement la liste des projets
+      await loadProjects();
+
+      // Mettre à jour le projet sélectionné
+      setSelectedProject(updatedProject);
+
+      showToast('Projet mis à jour avec succès !', 'success', 3000);
+
+    } catch (error: any) {
+      console.error('❌ Erreur mise à jour projet:', error);
+      showToast(`Erreur lors de la mise à jour : ${error.message}`, 'error');
+    }
   };
 
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
     if (!PermissionService.hasPermission(currentUser, 'projects', 'delete')) {
       alert('Vous n\'avez pas les permissions pour supprimer ce projet');
       return;
@@ -330,11 +382,28 @@ function App() {
     }
 
     if (window.confirm(confirmMessage)) {
-      setProjects(prev => prev.filter(project => project.id !== projectId));
-      
-      if (selectedProject && selectedProject.id === projectId) {
-        setSelectedProject(null);
-        setCurrentView('dashboard');
+      try {
+        console.log('🗑️ Suppression projet via API:', projectId);
+
+        // Appel API dynamique pour supprimer le projet
+        await api.deleteProject(projectId);
+
+        console.log('✅ Projet supprimé avec succès');
+
+        // Recharger automatiquement la liste des projets
+        await loadProjects();
+
+        // If the deleted project was selected, go back to dashboard
+        if (selectedProject && selectedProject.id === projectId) {
+          setSelectedProject(null);
+          setCurrentView('dashboard');
+        }
+
+        showToast('Projet supprimé avec succès !', 'success', 3000);
+
+      } catch (error: any) {
+        console.error('❌ Erreur suppression projet:', error);
+        showToast(`Erreur lors de la suppression : ${error.message}`, 'error');
       }
     }
   };

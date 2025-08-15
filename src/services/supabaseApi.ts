@@ -953,6 +953,64 @@ class SupabaseApiService {
       .subscribe()
   }
 
+  // Nouvelles subscriptions pour la dynamicité complète
+  subscribeToProjects(callback: (payload: any) => void) {
+    console.log('🔄 Subscription aux projets activée');
+    return supabase
+      .channel('projects_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects'
+        },
+        (payload) => {
+          console.log('📊 Changement projet:', payload);
+          callback(payload);
+        }
+      )
+      .subscribe()
+  }
+
+  subscribeToUsers(callback: (payload: any) => void) {
+    console.log('🔄 Subscription aux utilisateurs activée');
+    return supabase
+      .channel('users_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users'
+        },
+        (payload) => {
+          console.log('👥 Changement utilisateur:', payload);
+          callback(payload);
+        }
+      )
+      .subscribe()
+  }
+
+  subscribeToTasks(callback: (payload: any) => void) {
+    console.log('🔄 Subscription aux tâches activée');
+    return supabase
+      .channel('tasks_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        (payload) => {
+          console.log('📋 Changement tâche:', payload);
+          callback(payload);
+        }
+      )
+      .subscribe()
+  }
+
   // Méthodes de compatibilité avec l'ancienne API
   async getAllProjects(): Promise<{ projects: Project[] }> {
     return this.getProjects();
