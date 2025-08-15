@@ -1,17 +1,18 @@
 import { apiService } from '../services/api'
 import { supabaseApiService } from '../services/supabaseApi'
+import { hybridApiService } from '../services/hybridApi'
 import { mockDataService } from '../services/mockDataService'
 
 // Détermine quel service API utiliser
 // 1) En production: jamais de mock
-// 2) Priorité: Backend (Render) si VITE_USE_SUPABASE !== 'true'
+// 2) Si VITE_USE_SUPABASE === 'true' on utilise un service hybride (Supabase -> fallback Backend)
 const isProd = import.meta.env.PROD
 const envUseSupabase = import.meta.env.VITE_USE_SUPABASE === 'true'
 const envUseMock = import.meta.env.VITE_USE_MOCK_DATA === 'true'
 const localMock = typeof window !== 'undefined' && localStorage.getItem('useMockData') === 'true'
 const useMockData = isProd ? false : (envUseMock || localMock)
-// En production, on force l'API backend quoi qu'il arrive
-const useSupabase = !isProd && !useMockData && envUseSupabase
+// En production, on autorise Supabase via un service hybride
+const useSupabase = !useMockData && envUseSupabase
 
 export const useApi = () => {
   // Priorité : Mock Data > Supabase > Backend (Render)
@@ -21,8 +22,8 @@ export const useApi = () => {
   }
 
   if (useSupabase) {
-    console.log('🗄️ Utilisation de Supabase')
-    return supabaseApiService
+    console.log('🗄️ Utilisation du mode Supabase (hybride)')
+    return hybridApiService
   }
 
   console.log('⚙️ Utilisation du backend (Render)')
