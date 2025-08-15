@@ -2,7 +2,8 @@ import knex from 'knex';
 import { logger } from '../utils/logger';
 
 const isProd = process.env.NODE_ENV === 'production';
-const resolvedPort = parseInt(process.env.DB_PORT || (isProd ? '6543' : '5432'));
+// Utiliser 5432 par défaut en prod si DB_PORT n'est pas défini
+const resolvedPort = parseInt(process.env.DB_PORT || '5432');
 const resolvedDbName = process.env.DB_NAME || (isProd ? 'postgres' : 'project_management');
 
 const config = {

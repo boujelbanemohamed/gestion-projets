@@ -401,17 +401,18 @@ router.get('/project/:projectId', authenticateToken, async (req: AuthRequest, re
     const attachments = await db('projet_attachments as pa')
       .select([
         'pa.id',
-        'pa.nom_fichier',
-        'pa.chemin_fichier',
-        'pa.taille_fichier',
-        'pa.type_mime',
-        'pa.created_at',
+        'pa.nom',
+        'pa.taille',
+        'pa.type',
+        'pa.url',
+        'pa.storage_key',
+        'pa.uploaded_at',
         'u.nom as uploaded_by_nom',
         'u.prenom as uploaded_by_prenom'
       ])
       .leftJoin('users as u', 'pa.uploaded_by', 'u.id')
       .where('pa.projet_id', projectId)
-      .orderBy('pa.created_at', 'desc');
+      .orderBy('pa.uploaded_at', 'desc');
 
     res.json({ attachments });
   } catch (error) {
@@ -446,17 +447,18 @@ router.get('/task/:taskId', authenticateToken, async (req: AuthRequest, res) => 
     const attachments = await db('tache_attachments as ta')
       .select([
         'ta.id',
-        'ta.nom_fichier',
-        'ta.chemin_fichier',
-        'ta.taille_fichier',
-        'ta.type_mime',
-        'ta.created_at',
+        'ta.nom',
+        'ta.taille',
+        'ta.type',
+        'ta.url',
+        'ta.storage_key',
+        'ta.uploaded_at',
         'u.nom as uploaded_by_nom',
         'u.prenom as uploaded_by_prenom'
       ])
       .leftJoin('users as u', 'ta.uploaded_by', 'u.id')
       .where('ta.tache_id', taskId)
-      .orderBy('ta.created_at', 'desc');
+      .orderBy('ta.uploaded_at', 'desc');
 
     res.json({ attachments });
   } catch (error) {
