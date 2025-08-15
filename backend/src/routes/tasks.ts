@@ -62,7 +62,7 @@ router.get('/project/:projectId', authenticateToken, async (req: AuthRequest, re
       .groupBy('t.id');
 
     // Filter for regular users
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       query = query.whereExists(
         db('tache_utilisateurs')
           .where('tache_id', db.raw('t.id'))
@@ -113,7 +113,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check permissions for regular users
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs')
         .where('tache_id', id)
         .where('user_id', req.user!.id)
@@ -168,7 +168,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     const { nom, description, scenario_execution, criteres_acceptation, etat, date_realisation, projet_id, utilisateurs } = value;
 
     // Check if user has access to the project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('taches as t')
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')
         .where('t.projet_id', projet_id)
@@ -254,7 +254,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs')
         .where('tache_id', id)
         .where('user_id', req.user!.id)

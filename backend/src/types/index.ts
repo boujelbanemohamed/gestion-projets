@@ -5,7 +5,7 @@ export interface User {
   email: string;
   fonction?: string;
   departement_id?: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'UTILISATEUR';
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER';
   password_hash: string;
   created_at: Date;
   updated_at: Date;

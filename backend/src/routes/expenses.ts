@@ -40,7 +40,7 @@ router.get('/project/:projectId', authenticateToken, async (req: AuthRequest, re
     }
 
     // Check if user has access to this project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', projectId)
@@ -136,7 +136,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check if user has access to this expense's project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', expense.projet_id)
@@ -172,7 +172,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check if user has access to this project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', projet_id)
@@ -228,7 +228,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check if user has access to this expense's project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', expense.projet_id)
@@ -273,7 +273,7 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check if user has access to this expense's project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', expense.projet_id)
@@ -309,7 +309,7 @@ router.get('/project/:projectId/stats', authenticateToken, async (req: AuthReque
     }
 
     // Check if user has access to this project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', projectId)

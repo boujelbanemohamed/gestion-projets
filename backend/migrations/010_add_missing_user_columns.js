@@ -23,7 +23,7 @@ exports.up = async function(knex) {
 	const hasRole = await knex.schema.hasColumn('users', 'role');
 	if (!hasRole) {
 		await knex.schema.alterTable('users', table => {
-			table.enu('role', ['SUPER_ADMIN', 'ADMIN', 'UTILISATEUR']).defaultTo('UTILISATEUR');
+			table.enu('role', ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER']).defaultTo('USER');
 		});
 	}
 

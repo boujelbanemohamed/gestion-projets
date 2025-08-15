@@ -113,7 +113,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check user permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       // Users can only see PV associated with their assigned projects
       const userProjects = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
@@ -186,7 +186,7 @@ router.get('/project/:projectId', authenticateToken, async (req: AuthRequest, re
     }
 
     // Check user permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('t.projet_id', projectId)
@@ -260,7 +260,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
     meetingMinutes.projets = projets;
 
     // Check user permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const userProjects = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('tu.user_id', req.user!.id)
@@ -284,7 +284,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
 router.post('/', authenticateToken, upload.single('file'), async (req: AuthRequest, res) => {
   try {
     // Check permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       return res.status(403).json({ error: 'Accès non autorisé pour créer des PV' });
     }
 
@@ -363,7 +363,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const { id } = req.params;
 
     // Check permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       return res.status(403).json({ error: 'Accès non autorisé pour modifier des PV' });
     }
 
@@ -438,7 +438,7 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const { id } = req.params;
 
     // Check permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       return res.status(403).json({ error: 'Accès non autorisé pour supprimer des PV' });
     }
 
@@ -476,7 +476,7 @@ router.get('/:id/download', authenticateToken, async (req: AuthRequest, res) => 
     }
 
     // Check user permissions
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const userProjects = await db('tache_utilisateurs as tu')
         .leftJoin('taches as t', 'tu.tache_id', 't.id')
         .where('tu.user_id', req.user!.id)

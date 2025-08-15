@@ -51,7 +51,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
       .groupBy('p.id', 'd.nom');
 
     // Filter for regular users (only projects they're assigned to)
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       query = query
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')
         .where('tu.user_id', req.user!.id);
@@ -73,7 +73,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
 
     // Get total count
     const totalQuery = db('projets as p');
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       totalQuery
         .leftJoin('taches as t', 'p.id', 't.projet_id')
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')
@@ -114,7 +114,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check permissions for regular users
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('taches as t')
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')
         .where('t.projet_id', id)
@@ -292,7 +292,7 @@ router.get('/:id/expenses', authenticateToken, async (req: AuthRequest, res) => 
     const { id } = req.params;
 
     // Check if user has access to the project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('taches as t')
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')
         .where('t.projet_id', id)
@@ -327,7 +327,7 @@ router.post('/:id/expenses', authenticateToken, async (req: AuthRequest, res) =>
     }
 
     // Check if user has access to the project
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('taches as t')
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')
         .where('t.projet_id', id)
@@ -386,7 +386,7 @@ router.put('/:id/expenses/:expenseId', authenticateToken, async (req: AuthReques
     }
 
     // Check permissions - only creator or admin can update
-    if (req.user!.role === 'UTILISATEUR' && existingExpense.created_by !== req.user!.id) {
+    if (req.user!.role === 'USER' && existingExpense.created_by !== req.user!.id) {
       return res.status(403).json({ error: 'Vous ne pouvez modifier que vos propres dépenses' });
     }
 
@@ -431,7 +431,7 @@ router.delete('/:id/expenses/:expenseId', authenticateToken, async (req: AuthReq
     }
 
     // Check permissions - only creator or admin can delete
-    if (req.user!.role === 'UTILISATEUR' && existingExpense.created_by !== req.user!.id) {
+    if (req.user!.role === 'USER' && existingExpense.created_by !== req.user!.id) {
       return res.status(403).json({ error: 'Vous ne pouvez supprimer que vos propres dépenses' });
     }
 
@@ -458,7 +458,7 @@ router.get('/all', authenticateToken, async (req: AuthRequest, res) => {
       .orderBy('p.nom', 'asc');
 
     // For regular users, still filter by their assigned projects
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       query = query
         .leftJoin('taches as t', 'p.id', 't.projet_id')
         .leftJoin('tache_utilisateurs as tu', 't.id', 'tu.tache_id')

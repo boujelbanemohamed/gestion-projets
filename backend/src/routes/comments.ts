@@ -28,7 +28,7 @@ router.get('/task/:taskId', authenticateToken, async (req: AuthRequest, res) => 
     }
 
     // Check if user has access to this task
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs')
         .where('tache_id', taskId)
         .where('user_id', req.user!.id)
@@ -89,7 +89,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check if user has access to this comment's task
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs')
         .where('tache_id', comment.tache_id)
         .where('user_id', req.user!.id)
@@ -124,7 +124,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Check if user has access to this task
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs')
         .where('tache_id', tache_id)
         .where('user_id', req.user!.id)
@@ -276,7 +276,7 @@ router.get('/:id/attachments', authenticateToken, async (req: AuthRequest, res) 
     }
 
     // Check if user has access to this comment's task
-    if (req.user!.role === 'UTILISATEUR') {
+    if (req.user!.role === 'USER') {
       const hasAccess = await db('tache_utilisateurs')
         .where('tache_id', comment.tache_id)
         .where('user_id', req.user!.id)

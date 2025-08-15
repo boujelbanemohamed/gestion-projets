@@ -51,7 +51,7 @@ exports.seed = async function(knex) {
       email: 'sophie.lemoine@example.com',
       fonction: 'Designer UX/UI',
       departement_id: departements.find(d => d.nom === 'Design').id,
-      role: 'UTILISATEUR',
+      role: 'USER',
       password_hash: passwordHash
     },
     {
@@ -60,7 +60,7 @@ exports.seed = async function(knex) {
       email: 'jean.moreau@example.com',
       fonction: 'Développeur',
       departement_id: departements.find(d => d.nom === 'IT').id,
-      role: 'UTILISATEUR',
+      role: 'USER',
       password_hash: passwordHash
     },
     {
@@ -69,7 +69,7 @@ exports.seed = async function(knex) {
       email: 'alice.rousseau@example.com',
       fonction: 'Testeur QA',
       departement_id: departements.find(d => d.nom === 'Qualité').id,
-      role: 'UTILISATEUR',
+      role: 'USER',
       password_hash: passwordHash
     }
   ]).returning('*');
@@ -146,8 +146,8 @@ exports.seed = async function(knex) {
   console.log('📧 Comptes de test créés :');
   console.log('   - marie.dupont@example.com (SUPER_ADMIN)');
   console.log('   - pierre.martin@example.com (ADMIN)');
-  console.log('   - sophie.lemoine@example.com (UTILISATEUR)');
-  console.log('   - jean.moreau@example.com (UTILISATEUR)');
-  console.log('   - alice.rousseau@example.com (UTILISATEUR)');
+  console.log('   - sophie.lemoine@example.com (USER)');
+  console.log('   - jean.moreau@example.com (USER)');
+  console.log('   - alice.rousseau@example.com (USER)');
   console.log('🔑 Mot de passe pour tous : password123');
 };

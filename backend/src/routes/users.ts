@@ -15,7 +15,7 @@ const createUserSchema = Joi.object({
   password: Joi.string().required().min(6),
   fonction: Joi.string().optional().max(100),
   departement_id: Joi.string().uuid().optional(),
-  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'UTILISATEUR').default('UTILISATEUR')
+  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER').default('USER')
 });
 
 const updateUserSchema = Joi.object({
@@ -24,11 +24,11 @@ const updateUserSchema = Joi.object({
   email: Joi.string().email().optional(),
   fonction: Joi.string().optional().max(100),
   departement_id: Joi.string().uuid().optional(),
-  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'UTILISATEUR').optional()
+  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER').optional()
 });
 
 const updatePermissionsSchema = Joi.object({
-  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'UTILISATEUR').required(),
+  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER').required(),
   customPermissions: Joi.object().optional()
 });
 
@@ -401,7 +401,7 @@ router.get('/:id/projects', authenticateToken, async (req: AuthRequest, res) => 
     }
 
     // Check permissions - users can see their own projects, admins can see all
-    if (req.user!.role === 'UTILISATEUR' && req.user!.id !== id) {
+    if (req.user!.role === 'USER' && req.user!.id !== id) {
       return res.status(403).json({ error: 'Accès non autorisé' });
     }
 
@@ -444,7 +444,7 @@ async function checkProjectAssignmentPermissions(
 
   // Admin can assign projects to regular users
   if (currentUser.role === 'ADMIN') {
-    if (targetUser.role !== 'UTILISATEUR') {
+    if (targetUser.role !== 'USER') {
       return {
         allowed: false,
         message: 'Vous ne pouvez assigner des projets qu\'aux utilisateurs réguliers'
@@ -454,8 +454,8 @@ async function checkProjectAssignmentPermissions(
   }
 
   // Regular users can only assign projects they manage
-  if (currentUser.role === 'UTILISATEUR') {
-    if (targetUser.role !== 'UTILISATEUR') {
+  if (currentUser.role === 'USER') {
+    if (targetUser.role !== 'USER') {
       return {
         allowed: false,
         message: 'Vous ne pouvez assigner des projets qu\'aux utilisateurs réguliers'

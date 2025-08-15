@@ -22,7 +22,7 @@ exports.up = async function(knex) {
       table.string('email', 255).notNullable().unique();
       table.string('fonction', 100);
       table.uuid('departement_id').references('id').inTable('departements').onDelete('SET NULL');
-      table.enu('role', ['SUPER_ADMIN', 'ADMIN', 'UTILISATEUR']).defaultTo('UTILISATEUR');
+      table.enu('role', ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER']).defaultTo('USER');
       table.string('password_hash').notNullable();
       table.timestamp('created_at').defaultTo(knex.fn.now());
       table.timestamp('updated_at').defaultTo(knex.fn.now());

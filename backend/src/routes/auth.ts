@@ -17,7 +17,7 @@ const registerSchema = Joi.object({
   password: Joi.string().required().min(6),
   fonction: Joi.string().optional().max(100),
   departement_id: Joi.string().uuid().optional(),
-  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'UTILISATEUR').default('UTILISATEUR')
+  role: Joi.string().valid('SUPER_ADMIN', 'ADMIN', 'MANAGER', 'USER').default('USER')
 });
 
 const loginSchema = Joi.object({
