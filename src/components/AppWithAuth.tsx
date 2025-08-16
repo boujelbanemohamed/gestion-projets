@@ -23,7 +23,7 @@ import SupabaseSetupButton from './SupabaseSetupButton';
 type ViewType = 'dashboard' | 'project' | 'members' | 'departments' | 'performance' | 'closed-projects' | 'admin-settings';
 
 export default function AppWithAuth() {
-  const { user: currentUser, loading: authLoading, signIn, signOut } = useAuth();
+  const { user: currentUser, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true';
   const useMock = import.meta.env.VITE_USE_MOCK_DATA === 'true' || localStorage.getItem('useMockData') === 'true';
 
@@ -164,7 +164,7 @@ export default function AppWithAuth() {
     }
   };
 
-  // Création d'un nouveau membre avec le système d'auth
+  // Création d'un nouveau membre avec le système d'auth Supabase
   const handleCreateMember = async (memberData: {
     nom: string;
     prenom: string;
@@ -180,29 +180,47 @@ export default function AppWithAuth() {
     }
 
     try {
-      console.log('👤 Création d\'un nouveau membre:', memberData.email);
-      
-      // Utiliser l'API unifiée pour la création d'utilisateur
-      const { user } = await api.createUser({
-        email: memberData.email,
-        password: memberData.mot_de_passe || 'password123',
+      console.log('👤 Création d\'un nouveau membre via Supabase:', memberData.email);
+      console.log('📋 Données membre:', {
         nom: memberData.nom,
         prenom: memberData.prenom,
         role: memberData.role,
-        fonction: memberData.fonction,
-        departement_id: undefined
+        fonction: memberData.fonction
       });
 
-      console.log('✅ Membre créé avec succès:', user);
+      // Utiliser directement le système d'authentification Supabase
+      const { user, error } = await signUp(
+        memberData.email,
+        memberData.mot_de_passe || 'password123',
+        {
+          nom: memberData.nom,
+          prenom: memberData.prenom,
+          role: memberData.role,
+          fonction: memberData.fonction
+        }
+      );
 
-      // Recharger automatiquement la liste des utilisateurs
-      await loadUsers();
-      
-      showToast('Membre créé avec succès !', 'success', 4000);
+      if (error) {
+        console.error('❌ Erreur création membre Supabase:', error);
+        showToast(`Erreur lors de la création: ${error.message} (Code: ${error.code || 'UNKNOWN'})`, 'error');
+        return;
+      }
+
+      if (user) {
+        console.log('✅ Membre créé avec succès dans Supabase:', user);
+
+        // Recharger automatiquement la liste des utilisateurs
+        await loadUsers();
+
+        showToast('Membre créé avec succès !', 'success', 4000);
+      } else {
+        console.error('❌ Aucun utilisateur retourné par Supabase');
+        showToast('Erreur: Aucun utilisateur créé', 'error');
+      }
 
     } catch (error: any) {
       console.error('❌ Erreur création membre:', error);
-      showToast(`Erreur lors de la création du membre: ${error.message}`, 'error');
+      showToast(`Erreur lors de la création du membre: ${error.message || 'Erreur inconnue'}`, 'error');
     }
   };
 
