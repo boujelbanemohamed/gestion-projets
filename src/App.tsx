@@ -421,33 +421,50 @@ function App() {
 
     try {
       console.log('👤 Création d\'un nouveau membre:', memberData.email);
-      
-      // Ne pas utiliser l'API admin côté navigateur (clé service requise)
-      // La vérification d'existence sera gérée par la création (erreur si doublon)
+      console.log('🔍 Utilisateur actuel:', currentUser);
+      console.log('🔍 Rôle utilisateur:', currentUser?.role);
+      console.log('🔍 Token disponible:', !!localStorage.getItem('auth_token'));
 
-      // Créer l'utilisateur dans Supabase Auth ET dans la table custom users
-      const { user, token } = await supabaseApiService.createUser({
-        email: memberData.email,
-        password: memberData.mot_de_passe || 'password123', // Mot de passe temporaire
-        nom: memberData.nom,
-        prenom: memberData.prenom,
-        role: memberData.role as any,
-        fonction: memberData.fonction,
-        departement_id: undefined, // Sera géré via la relation departement
-      });
+      // Vérifier si nous utilisons Supabase ou le backend
+      const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true';
+      console.log('🔄 Mode API:', useSupabase ? 'Supabase' : 'Backend');
 
-      console.log('✅ Membre créé avec succès dans Supabase:', user);
+      let user;
 
-      // Ajouter à la liste locale
-      const newMember: User = {
-        ...memberData,
-        id: user.id,
-        created_at: new Date()
-      };
-      setUsers(prev => [...prev, newMember]);
+      if (useSupabase) {
+        // Utiliser Supabase directement pour éviter les problèmes d'authentification admin
+        console.log('🗄️ Création via Supabase...');
+        const result = await supabaseApiService.createUser({
+          email: memberData.email,
+          password: memberData.mot_de_passe || 'password123',
+          nom: memberData.nom,
+          prenom: memberData.prenom,
+          role: memberData.role as any,
+          fonction: memberData.fonction,
+          departement_id: undefined
+        });
+        user = result.user;
+      } else {
+        // Utiliser l'API backend (nécessite admin)
+        console.log('⚙️ Création via Backend...');
+        const result = await api.createUser({
+          email: memberData.email,
+          password: memberData.mot_de_passe || 'password123',
+          nom: memberData.nom,
+          prenom: memberData.prenom,
+          role: memberData.role,
+          fonction: memberData.fonction,
+          departement_id: undefined
+        });
+        user = result.user;
+      }
 
-      // Envoyer un email de bienvenue avec les identifiants (optionnel)
-      console.log('📧 Envoi d\'un email de bienvenue à:', memberData.email);
+      console.log('✅ Membre créé avec succès:', user);
+
+      // Recharger automatiquement la liste des utilisateurs
+      await loadUsers();
+
+      showToast('Membre créé avec succès !', 'success', 4000);
       
     } catch (error) {
       console.error('❌ Erreur lors de la création du membre:', error);
