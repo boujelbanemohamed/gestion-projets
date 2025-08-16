@@ -22,8 +22,9 @@ export const useApi = () => {
   }
 
   if (useSupabase) {
-    console.log('🗄️ Utilisation du mode Supabase (hybride)')
-    return hybridApiService
+    console.log('🗄️ Utilisation du mode Supabase DIRECT (pas hybride)')
+    // Utiliser Supabase directement pour éviter les appels backend
+    return supabaseApiService
   }
 
   console.log('⚙️ Utilisation du backend (Render)')

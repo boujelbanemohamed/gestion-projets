@@ -185,9 +185,97 @@ function App() {
 
   // Check for existing authentication on app load
   useEffect(() => {
-    // Si Supabase est activé, on attend la connexion réelle
-    // sinon on ouvre le modal de connexion mock
-    setIsLoginModalOpen(true);
+    const checkExistingAuth = async () => {
+      console.log('🔍 Vérification de l\'authentification existante...');
+
+      // Vérifier si nous utilisons Supabase
+      const useSupabase = import.meta.env.VITE_USE_SUPABASE === 'true';
+
+      if (useSupabase) {
+        // Vérifier la session Supabase
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          console.log('✅ Session Supabase trouvée:', session.user.email);
+
+          // Récupérer le profil utilisateur
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (userData) {
+            const authUser: AuthUser = {
+              id: userData.id,
+              email: userData.email,
+              nom: userData.nom,
+              prenom: userData.prenom,
+              role: userData.role,
+              fonction: userData.fonction,
+              departement: userData.departement
+            };
+
+            setCurrentUser(authUser);
+            console.log('✅ Utilisateur restauré:', authUser);
+            return;
+          }
+        }
+      } else {
+        // Vérifier le token local pour le backend
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          console.log('✅ Token local trouvé, tentative de restauration...');
+          // Ici on pourrait valider le token avec le backend
+        }
+      }
+
+      // Aucune session trouvée, ouvrir le modal de connexion
+      console.log('❌ Aucune session trouvée, ouverture du modal');
+      setIsLoginModalOpen(true);
+    };
+
+    checkExistingAuth();
+
+    // Écouter les changements d'authentification Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 Changement d\'authentification:', event, session?.user?.email);
+
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Utilisateur connecté
+          const { data: userData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (userData) {
+            const authUser: AuthUser = {
+              id: userData.id,
+              email: userData.email,
+              nom: userData.nom,
+              prenom: userData.prenom,
+              role: userData.role,
+              fonction: userData.fonction,
+              departement: userData.departement
+            };
+
+            setCurrentUser(authUser);
+            setIsLoginModalOpen(false);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // Utilisateur déconnecté
+          setCurrentUser(null);
+          setIsLoginModalOpen(true);
+        }
+      }
+    );
+
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Charger les utilisateurs, départements et projets quand un utilisateur se connecte
